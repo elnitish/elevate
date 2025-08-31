@@ -7,10 +7,10 @@ import com.elevate.fna.dto.InvoiceResDTO;
 import com.elevate.fna.entity.InvoiceClass;
 import com.elevate.fna.repository.InvoiceClassRepo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InvoiceService {
@@ -43,5 +43,28 @@ public class InvoiceService {
     public ApiResponse<?> returnAllInvoices() {
         List<InvoiceClass> allInvoices = invoiceClassRepo.findAll();
         return new ApiResponse<>("Invoices", 200,allInvoices);
+    }
+
+    public ApiResponse<?> updateInvoiceStatus(long id, String status) {
+        Optional<InvoiceClass> tempInvoice = invoiceClassRepo.findById(id);
+        if(tempInvoice.isPresent()) {
+            InvoiceClass invoice = tempInvoice.get();
+            invoice.setStatus(status);
+            invoiceClassRepo.save(invoice);
+            return new ApiResponse<>("Invoice status updated successfully", 200, new InvoiceResDTO(
+                    invoice.getId(),
+                    invoice.getCustomerName(),
+                    invoice.getAmount(),
+                    invoice.getStatus(),
+                    invoice.getDate()
+            ));
+        }
+        return new ApiResponse<>("Invoice not found", 404,null);
+    }
+
+    public ApiResponse<?> returnInvoicesWithStatus(String status) {
+        System.out.println(status);
+        List<InvoiceClass> allInvoicesWithStatus = invoiceClassRepo.findByStatus(status);
+        return new ApiResponse<>("Invoices with status "+status, 200,allInvoicesWithStatus);
     }
 }
