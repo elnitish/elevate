@@ -1,11 +1,13 @@
-package com.elevate.fna;
+package com.elevate.fna.service;
 
 
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.fna.dto.InvoiceReqDTO;
 import com.elevate.fna.dto.InvoiceResDTO;
 import com.elevate.fna.entity.InvoiceClass;
+import com.elevate.fna.entity.InvoiceItemsClass;
 import com.elevate.fna.repository.InvoiceClassRepo;
+import com.elevate.fna.repository.InvoiceItemClassRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +18,22 @@ import java.util.Optional;
 public class InvoiceService {
 
     private final InvoiceClassRepo invoiceClassRepo;
+    private final InvoiceItemClassRepo invoiceItemClassRepo;
 
     @Autowired
-    public InvoiceService(InvoiceClassRepo invoiceClassRepo) {
+    public InvoiceService(InvoiceClassRepo invoiceClassRepo,InvoiceItemClassRepo invoiceItemClassRepo) {
         this.invoiceClassRepo = invoiceClassRepo;
+        this.invoiceItemClassRepo = invoiceItemClassRepo;
     }
 
     public ApiResponse<?> createNewInvoice(InvoiceReqDTO invoiceReqDTO) {
         System.out.println(invoiceReqDTO.toString());
         InvoiceClass newInvoice = new InvoiceClass(
                 invoiceReqDTO.getCustomerName(),
-                invoiceReqDTO.getCustomerEmail(),
-                invoiceReqDTO.getAmount()
+                invoiceReqDTO.getCustomerEmail()
+
         );
+        InvoiceItemsClass newInvoiceItem = new InvoiceItemsClass();
         System.out.println(newInvoice.toString());
         invoiceClassRepo.save(newInvoice);
         return new ApiResponse<>("Invoice created successfully",200, new InvoiceResDTO(

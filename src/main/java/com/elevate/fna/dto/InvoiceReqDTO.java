@@ -1,9 +1,10 @@
 package com.elevate.fna.dto;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
+import java.util.Map;
 
 @Data
 public class InvoiceReqDTO {
@@ -13,16 +14,17 @@ public class InvoiceReqDTO {
     @Email
     String customerEmail;
 
-    @Min(1)
-    Double amount;
+    @NotNull
+    private Map<Long, Integer> products;
 
     public InvoiceReqDTO() {
 
     }
 
-    public InvoiceReqDTO(String customerName, String customerEmail, Double amount) {
+    public InvoiceReqDTO(String customerName, String customerEmail, Map<Long, Integer> products) {
         this.customerName = customerName;
         this.customerEmail = customerEmail;
-        this.amount = amount;
+        this.products = products;
     }
+
 }

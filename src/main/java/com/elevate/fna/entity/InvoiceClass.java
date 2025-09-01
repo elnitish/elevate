@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -15,13 +17,13 @@ public class InvoiceClass {
     @Column(name = "invoice_id")
     Long id;
 
-    @Column(name = "customer_name")
+    @Column(name = "name")
     String customerName ;
 
-    @Column(name = "customer_email")
+    @Column(name = "email")
     String customerEmail ;
 
-    @Column(name = "amount")
+    @Column(name = "total_amount")
     Double amount;
 
     @Column(name = "status")
@@ -30,12 +32,13 @@ public class InvoiceClass {
     @Column(name = "date")
     LocalDate date;
 
+
+
     public InvoiceClass() {}
 
-    public InvoiceClass(String customerName, String customerEmail, Double amount) {
+    public InvoiceClass(String customerName, String customerEmail) {
         this.customerName = customerName;
         this.customerEmail = customerEmail;
-        this.amount = amount;
         this.status = "PENDING";
         this.date = LocalDate.now();
     }

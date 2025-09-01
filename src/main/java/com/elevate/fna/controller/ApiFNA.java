@@ -1,8 +1,9 @@
 package com.elevate.fna.controller;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.fna.InvoiceService;
+import com.elevate.fna.service.InvoiceService;
 import com.elevate.fna.dto.InvoiceReqDTO;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class ApiFNA {
     }
 
     @PostMapping("/createInvoice")
-    public ResponseEntity<?> createInvoice(@RequestBody InvoiceReqDTO invoiceReqDTO) {
+    public ResponseEntity<?> createInvoice(@Valid @RequestBody InvoiceReqDTO invoiceReqDTO) {
         ApiResponse<?> response = invoiceService.createNewInvoice(invoiceReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
