@@ -21,13 +21,13 @@ public class ApiAuth {
         this.userRegService = userRegService;
     }
 
-    @PostMapping("/addUser")
+    @PostMapping("/auth/addUser")
     public ResponseEntity<ApiResponse<?>> addUser(@RequestBody UserClassReqDTO userClassReqDTO){
         ApiResponse<?> httpResponse= userRegService.registerNewUser(userClassReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
 
-    @GetMapping("/getUser")
+    @GetMapping("/auth/getUser")
     public ResponseEntity<ApiResponse<?>> getUser(@RequestBody UserClassReqDTO userClassReqDTO){
         ApiResponse<?> httpResponse = userRegService.returnUser(userClassReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));

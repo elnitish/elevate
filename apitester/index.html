@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elevate API Tester</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Elevate API Tester</h1>
+
+        <label for="apiSelect">Select API:</label>
+        <select id="apiSelect">
+            <option value="/auth/getUser">/auth/getUser</option>
+            <option value="/fna/getAllInvoices">/fna/getAllInvoices</option>
+            <option value="/fna/getInvoiceStatus/{id}">/fna/getInvoiceStatus/{id}</option>
+            <option value="/fna/getAllPayments">/fna/getAllPayments</option>
+            <option value="/insc/getAllProducts">/insc/getAllProducts</option>
+            <option value="/insc/getAllProductStock">/insc/getAllProductStock</option>
+            <option value="/insc/getAllSupplier">/insc/getAllSupplier</option>
+            <option value="/insc/getAllPurchaseOrder">/insc/getAllPurchaseOrder</option>
+        </select>
+
+        <div id="paramContainer" style="display:none; margin-top:10px;">
+            <label for="paramInput">Enter Parameter (if required):</label>
+            <input type="text" id="paramInput" placeholder="e.g., invoice id">
+        </div>
+
+        <button id="testBtn">Test API</button>
+
+        <div class="result">
+            <h2>Response:</h2>
+            <pre id="response"></pre>
+            <h2>Status Code:</h2>
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

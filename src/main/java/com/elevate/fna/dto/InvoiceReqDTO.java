@@ -1,30 +1,13 @@
 package com.elevate.fna.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
+import com.elevate.fna.dto.InvoiceItemReqDTO;
 import lombok.Data;
-
-import java.util.Map;
+import java.util.List;
 
 @Data
 public class InvoiceReqDTO {
-    @NotNull
-    String customerName;
-
-    @Email
-    String customerEmail;
-
-    @NotNull
-    private Map<Long, Integer> products;
-
-    public InvoiceReqDTO() {
-
-    }
-
-    public InvoiceReqDTO(String customerName, String customerEmail, Map<Long, Integer> products) {
-        this.customerName = customerName;
-        this.customerEmail = customerEmail;
-        this.products = products;
-    }
-
+    private String name;       // customer name
+    private String email;      // customer email
+    private String date;       // invoice date (yyyy-MM-dd)
+    private List<InvoiceItemReqDTO> items;  // list of products in this invoice
 }

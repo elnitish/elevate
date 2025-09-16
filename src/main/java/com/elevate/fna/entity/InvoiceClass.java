@@ -1,45 +1,50 @@
 package com.elevate.fna.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
+import lombok.extern.apachecommons.CommonsLog;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
 
 @Entity
 @Data
 @Table(name = "invoices")
+@ToString(exclude = "items")
 public class InvoiceClass {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "invoice_id")
-    Long id;
+    private Long invoiceId;
 
-    @Column(name = "name")
-    String customerName ;
-
-    @Column(name = "email")
-    String customerEmail ;
+    private String name;
+    private String email;
 
     @Column(name = "total_amount")
-    Double amount;
+    private BigDecimal totalAmount;
 
-    @Column(name = "status")
-    String status;
+    @Column(name = "remaining_amount")
+    private BigDecimal remainingAmount=totalAmount;
 
-    @Column(name = "date")
-    LocalDate date;
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.PENDING;
+
+    private Date date;
+
+    // One Invoice → Many InvoiceItems
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<InvoiceItemsClass> items = new ArrayList<>();
+
+    public InvoiceClass(){}
 
 
-
-    public InvoiceClass() {}
-
-    public InvoiceClass(String customerName, String customerEmail) {
-        this.customerName = customerName;
-        this.customerEmail = customerEmail;
-        this.status = "PENDING";
-        this.date = LocalDate.now();
+    public enum Status {
+        PENDING, PAID, CANCELLED
     }
+
 }

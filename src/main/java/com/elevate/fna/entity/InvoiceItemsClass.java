@@ -1,39 +1,33 @@
 package com.elevate.fna.entity;
 
-
 import com.elevate.insc.entity.ProductClass;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
-
-import java.math.BigDecimal;
+import lombok.ToString;
 
 @Entity
 @Data
 @Table(name = "invoice_items")
+@ToString(exclude ="product" )
 public class InvoiceItemsClass {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "invoice_id")
-    private Long invoiceId;
+    // Many items → One Invoice
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invoice_id", nullable = false)
+    @JsonBackReference
+    private InvoiceClass invoice;
 
-    @Column(name = "product_id")
+    // Many items → One Product
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    @JsonManagedReference
+    private ProductClass product;
 
-    private Long productId;
-
-    @Column(name = "quantity")
     private Integer quantity;
-
-
-    public InvoiceItemsClass(){
-
-    }
-
-    public InvoiceItemsClass(Long invoiceId, Long productId, Integer quantity) {
-        this.invoiceId = invoiceId;
-        this.productId = productId;
-        this.quantity = quantity;
-
-    }
 }
