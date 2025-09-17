@@ -3,7 +3,6 @@ package com.elevate.insc.controller;
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.insc.entity.ProductClass;
 import com.elevate.insc.entity.PurchaseOrderClass;
-import com.elevate.insc.entity.StockLevelClass;
 import com.elevate.insc.entity.SupplierClass;
 import com.elevate.insc.service.InventoryService;
 import com.elevate.insc.service.PurchaseOrderService;
