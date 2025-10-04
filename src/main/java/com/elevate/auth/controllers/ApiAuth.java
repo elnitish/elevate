@@ -27,8 +27,9 @@ public class ApiAuth {
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
 
-    @GetMapping("/auth/getUser")
+    @PostMapping("/auth/getUser")
     public ResponseEntity<ApiResponse<?>> getUser(@RequestBody UserClassReqDTO userClassReqDTO){
+        System.out.println(userClassReqDTO);
         ApiResponse<?> httpResponse = userRegService.returnUser(userClassReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }

@@ -1,34 +1,31 @@
 package com.elevate.fna.service;
 
 
-import com.elevate.auth.dto.ApiResponse;
-import com.elevate.fna.controller.ApiFNA;
-import com.elevate.fna.dto.*;
-import com.elevate.fna.entity.InvoiceClass;
-import com.elevate.fna.entity.InvoiceItemsClass;
-import com.elevate.fna.entity.PaymentClass;
-import com.elevate.fna.repository.InvoiceClassRepo;
-import com.elevate.fna.repository.InvoiceItemClassRepo;
-import com.elevate.fna.repository.PaymentClassRepo;
-import com.elevate.insc.entity.ProductClass;
-import com.elevate.insc.entity.StockLevelClass;
-import com.elevate.insc.repository.ProductClassRepo;
-import com.elevate.insc.repository.StockLevelRepo;
-import com.elevate.insc.service.InventoryService;
-import com.elevate.insc.service.StockMovementService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.elevate.auth.dto.ApiResponse;
+import com.elevate.fna.dto.InvoiceItemReqDTO;
+import com.elevate.fna.dto.InvoiceReqDTO;
+import com.elevate.fna.dto.InvoiceResDTO;
+import com.elevate.fna.dto.MapperDTO;
+import com.elevate.fna.dto.PaymentClassReqDTO;
+import com.elevate.fna.entity.InvoiceClass;
 import static com.elevate.fna.entity.InvoiceClass.Status.PAID;
+import com.elevate.fna.entity.InvoiceItemsClass;
+import com.elevate.fna.entity.PaymentClass;
+import com.elevate.fna.repository.InvoiceClassRepo;
+import com.elevate.fna.repository.PaymentClassRepo;
+import com.elevate.insc.entity.ProductClass;
+import com.elevate.insc.repository.ProductClassRepo;
+import com.elevate.insc.service.InventoryService;
+import com.elevate.insc.service.StockMovementService;
 
 @Service
 public class InvoiceService {
@@ -89,7 +86,7 @@ public class InvoiceService {
 
         invoice.setItems(items);
         invoice.setTotalAmount(totalAmount);
-
+        stockMovementService.recordStockMomentForInvoices(invoice);
         InvoiceClass response = invoiceClassRepo.save(invoice);
         return new ApiResponse<>("Invoice created successfully", 200, response);
     }
@@ -142,6 +139,11 @@ public class InvoiceService {
     }
 
     public ApiResponse<?> createNewPayment(PaymentClassReqDTO paymentClassReqDTO) {
+        // Validate that invoiceID is not null
+        if (paymentClassReqDTO.getInvoiceID() == null) {
+            return new ApiResponse<>("Invoice ID is required and cannot be null", 400, null);
+        }
+        
         InvoiceClass invoice = invoiceClassRepo.findById(paymentClassReqDTO.getInvoiceID()).orElse(null);
         if (invoice == null) {
             return new ApiResponse<>("Invoice not found", 404, null);

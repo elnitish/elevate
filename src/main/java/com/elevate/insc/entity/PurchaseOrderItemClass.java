@@ -1,5 +1,6 @@
 package com.elevate.insc.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,5 +20,6 @@ public class PurchaseOrderItemClass {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_order_id")
+    @JsonBackReference
     private PurchaseOrderClass purchaseOrder;
 }

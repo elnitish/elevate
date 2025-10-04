@@ -28,10 +28,11 @@ public class StockMovementClass {
     public enum MovementType {
         IN, OUT
     }
-    public StockMovementClass(Long productId, MovementType type, Integer quantity, LocalDateTime date) {
+    public StockMovementClass(Long productId, MovementType type, Integer quantity, LocalDateTime date,String reference) {
         this.productId = productId;
         this.quantity = quantity;
         this.type = type;
         this.date = date;
+        this.reference = reference;
     }
 }

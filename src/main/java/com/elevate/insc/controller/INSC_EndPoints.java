@@ -1,11 +1,13 @@
 package com.elevate.insc.controller;
 
 import com.elevate.auth.dto.ApiResponse;
+import com.elevate.insc.dto.UpdatePurchaseOrderStatusReqDTO;
 import com.elevate.insc.entity.ProductClass;
 import com.elevate.insc.entity.PurchaseOrderClass;
 import com.elevate.insc.entity.SupplierClass;
 import com.elevate.insc.service.InventoryService;
 import com.elevate.insc.service.PurchaseOrderService;
+import com.elevate.insc.service.StockMovementService;
 import com.elevate.insc.service.SupplierService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +23,14 @@ public class INSC_EndPoints {
     private final InventoryService inventoryService;
     private final SupplierService supplierService;
     private final PurchaseOrderService orderService;
+    private final StockMovementService stockMovementService;
 
     @Autowired
-    public INSC_EndPoints(InventoryService inventoryService, SupplierService supplierService,PurchaseOrderService orderService) {
+    public INSC_EndPoints(InventoryService inventoryService, SupplierService supplierService, PurchaseOrderService orderService, StockMovementService stockMovementService) {
         this.inventoryService = inventoryService;
         this.supplierService = supplierService;
         this.orderService = orderService;
-
+        this.stockMovementService = stockMovementService;
     }
 
     @PostMapping("/insc/createProduct")
@@ -69,9 +72,9 @@ public class INSC_EndPoints {
     }
 
     // PUT /inventory/orders/{id}/received
-    @PutMapping("/insc/updateStatus/{id}")
-    public ResponseEntity<?> markReceived(@PathVariable Long id) {
-        ApiResponse<?> response = orderService.markReceived(id);
+    @PutMapping("/insc/updateStatus")
+    public ResponseEntity<?> markReceived(@RequestBody UpdatePurchaseOrderStatusReqDTO updatePurchaseOrderStatusReqDTO) {
+        ApiResponse<?> response = orderService.markReceived(updatePurchaseOrderStatusReqDTO);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -82,5 +85,11 @@ public class INSC_EndPoints {
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
+
+    @GetMapping("/insc/getAllStockMovements")
+    public ResponseEntity<?> returnAllStockMovements() {
+        ApiResponse<?> response = stockMovementService.returnAllStockMovements();
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
 
 }

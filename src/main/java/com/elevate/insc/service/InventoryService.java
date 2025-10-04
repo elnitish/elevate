@@ -23,7 +23,7 @@ public class InventoryService {
     private StockLevelRepo stockLevelRepo;
 
     @Autowired
-    public InventoryService(ProductClassRepo productClassRepo, StockLevelRepo stockLevelRepo, PurchaseOrderItemRepo purchaseOrderItemRepo) {
+    public InventoryService(ProductClassRepo productClassRepo, StockLevelRepo stockLevelRepo, PurchaseOrderItemRepo purchaseOrderItemRepo,StockMovementService stockMovementService) {
         this.productClassRepo = productClassRepo;
         this.stockLevelRepo = stockLevelRepo;
     }
@@ -59,12 +59,12 @@ public class InventoryService {
     }
 
     public void deductStock(List<InvoiceItemReqDTO> items) {
-        for (InvoiceItemReqDTO item : items) {
-            Optional<ProductClass> product = productClassRepo.findById(item.getProductId());
-            System.out.println(product.get());
-            StockLevelClass stock = stockLevelRepo.findByProduct(product.get()).orElse(null);
-            stock.setQuantity(stock.getQuantity() - item.getQuantity());
-            stockLevelRepo.save(stock);
-        }
+//        for (InvoiceItemReqDTO item : items) {
+//            Optional<ProductClass> product = productClassRepo.findById(item.getProductId());
+//            System.out.println(product.get());
+//            StockLevelClass stock = stockLevelRepo.findByProduct(product.get()).orElse(null);
+//            stock.setQuantity(stock.getQuantity() - item.getQuantity());
+//            stockLevelRepo.save(stock);
+//        }
     }
 }

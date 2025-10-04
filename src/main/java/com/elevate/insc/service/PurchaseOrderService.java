@@ -1,6 +1,7 @@
 package com.elevate.insc.service;
 
 import com.elevate.auth.dto.ApiResponse;
+import com.elevate.insc.dto.UpdatePurchaseOrderStatusReqDTO;
 import com.elevate.insc.entity.PurchaseOrderClass;
 import com.elevate.insc.entity.PurchaseOrderItemClass;
 import com.elevate.insc.entity.StockMovementClass;
@@ -32,16 +33,18 @@ public class PurchaseOrderService {
             }
         }
         orderRepository.save(order);
-        stockMovementService.recordStockMoment(order);
+        stockMovementService.recordStockMomentForPurchaseOrder(order);
         inventoryService.addStock(order);
         return new ApiResponse<>("Purchase order created successfully", 200, null);
     }
 
-    public ApiResponse<?> markReceived(Long orderId) {
+    public ApiResponse<?> markReceived(UpdatePurchaseOrderStatusReqDTO updatePurchaseOrderStatusReqDTO) {
+        Long orderId = updatePurchaseOrderStatusReqDTO.getOrderID();
+        String Status = updatePurchaseOrderStatusReqDTO.getNewStatus();
         PurchaseOrderClass order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        order.setStatus(PurchaseOrderClass.Status.RECEIVED);
+        PurchaseOrderClass.Status status = PurchaseOrderClass.Status.valueOf(Status);
+        order.setStatus(status);
         orderRepository.save(order);
         return new ApiResponse<>("Order marked successfully", 200, null);
     }

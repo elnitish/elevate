@@ -2,6 +2,8 @@ package com.elevate.fna.controller;
 
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.fna.dto.PaymentClassReqDTO;
+import com.elevate.fna.entity.CustomerClass;
+import com.elevate.fna.service.CustomerService;
 import com.elevate.fna.service.InvoiceService;
 import com.elevate.fna.dto.InvoiceReqDTO;
 import jakarta.validation.Valid;
@@ -14,10 +16,12 @@ import org.springframework.web.bind.annotation.*;
 public class ApiFNA {
 
     private final InvoiceService invoiceService;
+    private final CustomerService customerService;
 
     @Autowired
-    public ApiFNA(InvoiceService invoiceService) {
+    public ApiFNA(InvoiceService invoiceService,CustomerService customerService) {
         this.invoiceService = invoiceService;
+        this.customerService = customerService;
     }
 
     @PostMapping("/fna/createInvoice")
@@ -57,10 +61,21 @@ public class ApiFNA {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/fna/getAllPayments/")
+    @GetMapping("/fna/getAllPayments")
     public ResponseEntity<?> getAllPayments() {
         ApiResponse<?> response = invoiceService.getAllPayments();
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
+    @PostMapping("/fna/createCustomer")
+    public ResponseEntity<?> createCustomer(@RequestBody CustomerClass customerClass) {
+        ApiResponse<?> response = customerService.createNewCustomer(customerClass);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
+
+    @GetMapping("/fna/getAllCustomers")
+    public ResponseEntity<?> getAllCustomers() {
+        ApiResponse<?> response = customerService.returnAllCustomers();
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
 }
