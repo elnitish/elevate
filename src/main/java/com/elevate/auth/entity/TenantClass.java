@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @Table(name = "tenants")
-public class Tenant {
+public class TenantClass {
     
     @Id
     @Column(name = "id", length = 36)
@@ -43,10 +43,10 @@ public class Tenant {
         FREE, PRO, ENTERPRISE
     }
     
-    public Tenant() {
+    public TenantClass() {
     }
     
-    public Tenant(String id, String name, String email, PlanType planType) {
+    public TenantClass(String id, String name, String email, PlanType planType) {
         this.id = id;
         this.name = name;
         this.email = email;

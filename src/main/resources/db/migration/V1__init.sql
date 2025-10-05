@@ -36,3 +36,13 @@ CREATE TABLE auth_credentials (
         REFERENCES users(tenant_id, username)
         ON DELETE CASCADE
 );
+
+
+CREATE TABLE session_tokens (
+                                session_token CHAR(36) PRIMARY KEY,
+                                tenant_id CHAR(36) NOT NULL,
+                                username VARCHAR(100) NOT NULL,
+                                role VARCHAR(20) NOT NULL,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

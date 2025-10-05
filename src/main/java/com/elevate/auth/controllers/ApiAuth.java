@@ -36,6 +36,19 @@ public class ApiAuth {
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
 
+    // Session Token Services
+    @GetMapping("/validate-token/{sessionToken}")
+    public ResponseEntity<ApiResponse<?>> validateSessionToken(@PathVariable String sessionToken) {
+        ApiResponse<?> response = userRegService.validateSessionToken(sessionToken);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
+
+    @PostMapping("/logout/{sessionToken}")
+    public ResponseEntity<ApiResponse<?>> logoutUser(@PathVariable String sessionToken) {
+        ApiResponse<?> response = userRegService.logoutUser(sessionToken);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
+
     // Tenant Management Services
     @GetMapping("/tenants/{id}")
     public ResponseEntity<ApiResponse<?>> getTenantById(@PathVariable String id) {

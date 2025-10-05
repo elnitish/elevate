@@ -1,6 +1,6 @@
 package com.elevate.auth.dto;
 
-import com.elevate.auth.entity.Tenant;
+import com.elevate.auth.entity.TenantClass;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,7 +25,7 @@ public class TenantDTO {
     private String planType = "FREE";
     private Boolean isActive = true;
     
-    public TenantDTO(Tenant tenant) {
+    public TenantDTO(TenantClass tenant) {
         this.id = tenant.getId();
         this.name = tenant.getName();
         this.email = tenant.getEmail();
