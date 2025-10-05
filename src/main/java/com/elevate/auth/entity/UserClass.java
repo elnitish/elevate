@@ -1,21 +1,6 @@
 package com.elevate.auth.entity;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,45 +11,34 @@ import lombok.Setter;
 public class UserClass {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id", length = 36)
+    private String id;
     
-    @Column(name = "username", unique = true, nullable = false, length = 100)
+    @Column(name = "tenant_id", nullable = false, length = 36)
+    private String tenantId;
+    
+    @Column(name = "username", nullable = false, length = 100)
     private String username;
     
-    @Column(name = "email", unique = true, nullable = false, length = 255)
+    @Column(name = "email", length = 255)
     private String email;
     
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRole role = UserRole.USER;
     
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
-    
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-    
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-    
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<UserRole> userRoles = new HashSet<>();
+    public enum UserRole {
+        ADMIN, USER
+    }
 
     public UserClass() {
     }
 
-    public UserClass(String username, String email, String passwordHash) {
+    public UserClass(String id, String tenantId, String username, String email, UserRole role) {
+        this.id = id;
+        this.tenantId = tenantId;
         this.username = username;
         this.email = email;
-        this.passwordHash = passwordHash;
-    }
-    
-    public UserClass(String username, String email, String passwordHash, Boolean isActive) {
-        this.username = username;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.isActive = isActive;
+        this.role = role;
     }
 }

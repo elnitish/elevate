@@ -1,53 +1,51 @@
 package com.elevate.auth.controllers;
 
 import com.elevate.auth.dto.ApiResponse;
+import com.elevate.auth.dto.TenantDTO;
 import com.elevate.auth.dto.UserClassReqDTO;
+import com.elevate.auth.service.TenantService;
 import com.elevate.auth.service.UserRegService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/auth")
 public class ApiAuth {
 
     private final UserRegService userRegService;
+    private final TenantService tenantService;
 
     @Autowired
-    public ApiAuth(UserRegService userRegService) {
+    public ApiAuth(UserRegService userRegService, TenantService tenantService) {
         this.userRegService = userRegService;
+        this.tenantService = tenantService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<?>> registerUser(@RequestBody UserClassReqDTO userClassReqDTO){
-        ApiResponse<?> httpResponse = userRegService.registerNewUser(userClassReqDTO);
-        return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
-    }
-
+    // User Authentication Services
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> loginUser(@RequestBody UserClassReqDTO userClassReqDTO){
         ApiResponse<?> httpResponse = userRegService.returnUser(userClassReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
     
-    @GetMapping("/user/email/{email}")
-    public ResponseEntity<ApiResponse<?>> getUserByEmail(@PathVariable String email) {
-        ApiResponse<?> httpResponse = userRegService.getUserByEmail(email);
+    @GetMapping("/tenant/{tenantId}/users")
+    public ResponseEntity<ApiResponse<?>> getUsersByTenant(@PathVariable String tenantId) {
+        ApiResponse<?> httpResponse = userRegService.getUsersByTenant(tenantId);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
-    
-    @PostMapping("/user/{userId}/roles")
-    public ResponseEntity<ApiResponse<?>> assignRolesToUser(@PathVariable Long userId, @RequestBody List<String> roleNames) {
-        ApiResponse<?> httpResponse = userRegService.assignRolesToUser(userId, roleNames);
-        return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
+
+    // Tenant Management Services
+    @GetMapping("/tenants/{id}")
+    public ResponseEntity<ApiResponse<?>> getTenantById(@PathVariable String id) {
+        ApiResponse<?> response = tenantService.getTenantById(id);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
-    
-    @DeleteMapping("/user/{userId}/roles")
-    public ResponseEntity<ApiResponse<?>> removeRolesFromUser(@PathVariable Long userId, @RequestBody List<String> roleNames) {
-        ApiResponse<?> httpResponse = userRegService.removeRolesFromUser(userId, roleNames);
-        return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
+
+    @PutMapping("/tenants/{id}")
+    public ResponseEntity<ApiResponse<?>> updateTenant(@PathVariable String id, @RequestBody TenantDTO tenantDTO) {
+        ApiResponse<?> response = tenantService.updateTenant(id, tenantDTO);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 }
