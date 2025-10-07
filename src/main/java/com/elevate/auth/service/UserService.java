@@ -1,9 +1,19 @@
 package com.elevate.auth.service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.elevate.auth.configuration.TokenUUID;
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.auth.dto.UserClassReqDTO;
 import com.elevate.auth.dto.UserClassResDTO;
+import com.elevate.auth.dto.UserCreateReqDTO;
 import com.elevate.auth.entity.AuthCredentials;
 import com.elevate.auth.entity.SessionToken;
 import com.elevate.auth.entity.UserClass;
@@ -11,17 +21,9 @@ import com.elevate.auth.repository.AuthCredentialsRepository;
 import com.elevate.auth.repository.SessionTokenRepository;
 import com.elevate.auth.repository.TenantRepository;
 import com.elevate.auth.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
-public class UserRegService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
@@ -31,7 +33,7 @@ public class UserRegService {
     private final TokenUUID tokenUUID;
 
     @Autowired
-    public UserRegService(UserRepository userRepository, TenantRepository tenantRepository, AuthCredentialsRepository authCredentialsRepository, SessionTokenRepository sessionTokenRepository, TokenUUID tokenUUID) {
+    public UserService(UserRepository userRepository, TenantRepository tenantRepository, AuthCredentialsRepository authCredentialsRepository, SessionTokenRepository sessionTokenRepository, TokenUUID tokenUUID) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.authCredentialsRepository = authCredentialsRepository;
@@ -127,5 +129,64 @@ public class UserRegService {
         
         sessionTokenRepository.deleteBySessionToken(sessionToken);
         return new ApiResponse<>("User logged out successfully",200,null);
+    }
+    
+    @Transactional
+    public ApiResponse<?> createUser(UserCreateReqDTO userCreateReqDTO) {
+        // Validate tenant exists
+        if (!tenantRepository.existsById(userCreateReqDTO.getTenantId())) {
+            return new ApiResponse<>("Tenant not found", 404, null);
+        }
+        
+        // Check if user already exists in this tenant
+        if (userRepository.findByTenantIdAndUsername(userCreateReqDTO.getTenantId(), userCreateReqDTO.getUsername()).isPresent()) {
+            return new ApiResponse<>("Username already exists in this tenant", 409, null);
+        }
+        
+        // Check if email already exists in this tenant (if email is provided)
+        if (userCreateReqDTO.getEmail() != null && !userCreateReqDTO.getEmail().trim().isEmpty()) {
+            if (userRepository.findByTenantIdAndEmail(userCreateReqDTO.getTenantId(), userCreateReqDTO.getEmail()).isPresent()) {
+                return new ApiResponse<>("Email already exists in this tenant", 409, null);
+            }
+        }
+        
+        // Validate role
+        UserClass.UserRole userRole;
+        try {
+            userRole = UserClass.UserRole.valueOf(userCreateReqDTO.getRole().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return new ApiResponse<>("Invalid role. Must be ADMIN or USER", 400, null);
+        }
+        
+        // Generate UUID for user
+        String userId = java.util.UUID.randomUUID().toString();
+        
+        // Hash the password
+        String hashedPassword = bCryptPasswordEncoder.encode(userCreateReqDTO.getPassword());
+        
+        // Create user entity
+        UserClass newUser = new UserClass(
+            userId,
+            userCreateReqDTO.getTenantId(),
+            userCreateReqDTO.getUsername().trim(),
+            userCreateReqDTO.getEmail() != null ? userCreateReqDTO.getEmail().trim() : null,
+            userRole
+        );
+        
+        // Create auth credentials
+        AuthCredentials authCredentials = new AuthCredentials(
+            userCreateReqDTO.getTenantId(),
+            userCreateReqDTO.getUsername().trim(),
+            hashedPassword
+        );
+        
+        // Save both user and credentials
+        UserClass savedUser = userRepository.save(newUser);
+        authCredentialsRepository.save(authCredentials);
+        
+        // Create response DTO
+        UserClassResDTO userResponse = new UserClassResDTO(savedUser);
+        
+        return new ApiResponse<>("User created successfully", 201, userResponse);
     }
 }

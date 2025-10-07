@@ -23,13 +23,11 @@ public class TenantDTO {
     private String email;
     
     private String planType = "FREE";
-    private Boolean isActive = true;
     
     public TenantDTO(TenantClass tenant) {
         this.id = tenant.getId();
         this.name = tenant.getName();
         this.email = tenant.getEmail();
         this.planType = tenant.getPlanType().name();
-        this.isActive = tenant.getIsActive();
     }
 }

@@ -30,22 +30,20 @@ public class ApiFNA {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/fna/getAllInvoices")
-    public ResponseEntity<?> getAllInvoices(@RequestParam(required = false) String status) {
-        System.out.println(status);
-        if (status==null) {
-            ApiResponse<?> response = invoiceService.returnAllInvoices();
+    @GetMapping("/fna/tenant/{tenantId}/invoices")
+    public ResponseEntity<?> getAllInvoices(@PathVariable String tenantId, @RequestParam(required = false) String status) {
+        if (status == null) {
+            ApiResponse<?> response = invoiceService.returnAllInvoices(tenantId);
             return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
-        }
-        else {
-            ApiResponse<?> response = invoiceService.returnInvoicesWithStatus(status);
+        } else {
+            ApiResponse<?> response = invoiceService.returnInvoicesWithStatus(tenantId, status);
             return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
         }
     }
 
-    @PutMapping("/fna/invoice/{id}/{status}")
-    public ResponseEntity<?> updateInvoice(@PathVariable("id") long id, @PathVariable("status") String status) {
-        ApiResponse<?> response = invoiceService.updateInvoiceStatus(id, status);
+    @PutMapping("/fna/tenant/{tenantId}/invoice/{id}/{status}")
+    public ResponseEntity<?> updateInvoiceStatus(@PathVariable String tenantId, @PathVariable Long id, @PathVariable String status) {
+        ApiResponse<?> response = invoiceService.updateInvoiceStatus(tenantId, id, status);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 

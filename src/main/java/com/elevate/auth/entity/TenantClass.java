@@ -28,9 +28,6 @@ public class TenantClass {
     @Column(name = "plan_type", nullable = false)
     private PlanType planType = PlanType.FREE;
     
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
-    
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

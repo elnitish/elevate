@@ -1,20 +1,20 @@
 package com.elevate.auth.service;
 
-import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.dto.TenantDTO;
-import com.elevate.auth.entity.TenantClass;
-import com.elevate.auth.repository.TenantRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import com.elevate.auth.dto.ApiResponse;
+import com.elevate.auth.dto.TenantDTO;
+import com.elevate.auth.dto.TenantReqDTO;
+import com.elevate.auth.entity.TenantClass;
+import com.elevate.auth.repository.TenantRepository;
 
 @Service
 public class TenantService {
 
     private final TenantRepository tenantRepository;
 
-    @Autowired
     public TenantService(TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
     }
@@ -53,10 +53,6 @@ public class TenantService {
         
         tenant.setName(tenantDTO.getName());
         tenant.setEmail(tenantDTO.getEmail());
-        tenant.setPlanType(TenantClass.PlanType.valueOf(tenantDTO.getPlanType().toUpperCase()));
-        if (tenantDTO.getIsActive() != null) {
-            tenant.setIsActive(tenantDTO.getIsActive());
-        }
         
         TenantClass updatedTenant = tenantRepository.save(tenant);
         TenantDTO responseDTO = new TenantDTO(updatedTenant);
@@ -64,4 +60,19 @@ public class TenantService {
         return new ApiResponse<>("Tenant updated successfully", 200, responseDTO);
     }
 
+    public ApiResponse<?> createTenant(TenantReqDTO tenantReqDTO) {
+        // Generate UUID for tenant
+        String tenantId = java.util.UUID.randomUUID().toString();
+        
+        TenantClass newTenant = new TenantClass(
+            tenantId,
+            tenantReqDTO.getName(),
+            tenantReqDTO.getEmail(),
+            TenantClass.PlanType.valueOf(tenantReqDTO.getPlanType().toUpperCase())
+        );
+        
+        TenantClass savedTenant = tenantRepository.save(newTenant);
+        TenantDTO responseDTO = new TenantDTO(savedTenant);
+        return new ApiResponse<>("Tenant created successfully", 200, responseDTO);
+    }
 }

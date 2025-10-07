@@ -1,8 +1,14 @@
+-- ================================
+-- PAYMENTS
+-- ================================
 CREATE TABLE payments (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id CHAR(36) PRIMARY KEY,
+    tenant_id CHAR(36) NOT NULL,
     invoice_id BIGINT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL CHECK (amount >= 0),
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    method ENUM('CASH','CARD','BANK_TRANSFER','UPI')
-
+    method ENUM('CASH','CARD','BANK_TRANSFER','UPI') NOT NULL,
+    transaction_ref VARCHAR(100),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE
 );

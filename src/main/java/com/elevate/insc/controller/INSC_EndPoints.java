@@ -1,6 +1,7 @@
 package com.elevate.insc.controller;
 
 import com.elevate.auth.dto.ApiResponse;
+import com.elevate.insc.dto.PurchaseOrderReqDTO;
 import com.elevate.insc.dto.UpdatePurchaseOrderStatusReqDTO;
 import com.elevate.insc.entity.ProductClass;
 import com.elevate.insc.entity.PurchaseOrderClass;
@@ -66,29 +67,33 @@ public class INSC_EndPoints {
     }
 
     @PostMapping("/insc/createPurchaseOrder")
-    public ResponseEntity<?> createOrder(@RequestBody PurchaseOrderClass order) {
-        ApiResponse<?> response = orderService.createOrder(order);
+    public ResponseEntity<?> createOrder(@RequestBody PurchaseOrderReqDTO orderDTO) {
+        ApiResponse<?> response = orderService.createPurchaseOrder(orderDTO);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
     // PUT /inventory/orders/{id}/received
-    @PutMapping("/insc/updateStatus")
-    public ResponseEntity<?> markReceived(@RequestBody UpdatePurchaseOrderStatusReqDTO updatePurchaseOrderStatusReqDTO) {
-        ApiResponse<?> response = orderService.markReceived(updatePurchaseOrderStatusReqDTO);
+    @PutMapping("/insc/updateStatus/{tenantId}")
+    public ResponseEntity<?> markReceived(@PathVariable String tenantId, @RequestBody UpdatePurchaseOrderStatusReqDTO updatePurchaseOrderStatusReqDTO) {
+        ApiResponse<?> response = orderService.updatePurchaseOrderStatus(
+            tenantId,
+            updatePurchaseOrderStatusReqDTO.getOrderID().toString(),
+            updatePurchaseOrderStatusReqDTO.getNewStatus()
+        );
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
     // GET /inventory/orders
-    @GetMapping("/insc/getAllPurchaseOrder")
-    public ResponseEntity<?> listOrders() {
-        ApiResponse<?> response = orderService.listOrders();
+    @GetMapping("/insc/getAllPurchaseOrder/{tenantId}")
+    public ResponseEntity<?> listOrders(@PathVariable String tenantId) {
+        ApiResponse<?> response = orderService.getPurchaseOrdersByTenant(tenantId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
 
-    @GetMapping("/insc/getAllStockMovements")
-    public ResponseEntity<?> returnAllStockMovements() {
-        ApiResponse<?> response = stockMovementService.returnAllStockMovements();
+    @GetMapping("/insc/getAllStockMovements/{tenantId}")
+    public ResponseEntity<?> returnAllStockMovements(@PathVariable String tenantId) {
+        ApiResponse<?> response = new ApiResponse<>("Stock movements retrieved successfully", 200, stockMovementService.getStockMovementsByTenant(tenantId));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 

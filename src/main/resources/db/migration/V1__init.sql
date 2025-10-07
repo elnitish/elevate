@@ -6,7 +6,6 @@ CREATE TABLE tenants (
     name VARCHAR(255) NOT NULL,             -- Business/organization name
     email VARCHAR(255),                      -- Optional contact email
     plan_type ENUM('FREE','PRO','ENTERPRISE') DEFAULT 'FREE',
-    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
