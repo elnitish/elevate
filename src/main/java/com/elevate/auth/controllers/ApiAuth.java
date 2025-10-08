@@ -1,21 +1,19 @@
 package com.elevate.auth.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.dto.TenantDTO;
 import com.elevate.auth.dto.TenantReqDTO;
 import com.elevate.auth.dto.UserClassReqDTO;
-import com.elevate.auth.dto.UserCreateReqDTO;
 import com.elevate.auth.service.TenantService;
 import com.elevate.auth.service.UserService;
 
@@ -33,54 +31,34 @@ public class ApiAuth {
     }
 
     // User Authentication Services
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> loginUser(@RequestBody UserClassReqDTO userClassReqDTO){
-        ApiResponse<?> httpResponse = userService.returnUser(userClassReqDTO);
-        return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
-    }
-
-
-    @PostMapping("/register")
+    @PostMapping("/tenantRegister")//working
     public ResponseEntity<ApiResponse<?>> registerTenant(@RequestBody TenantReqDTO tenantReqDTO){
         ApiResponse<?> httpResponse = tenantService.createTenant(tenantReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
-
-    @GetMapping("/tenant/{tenantId}/users")
-    public ResponseEntity<ApiResponse<?>> getUsersByTenant(@PathVariable String tenantId) {
-        ApiResponse<?> httpResponse = userService.getUsersByTenant(tenantId);
+    @PostMapping("/createUser")//working
+    public ResponseEntity<ApiResponse<?>> createUser(@RequestBody UserClassReqDTO userClassReqDTO) {
+        ApiResponse<?> httpResponse = userService.createUser(userClassReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
 
-    @PostMapping("/users")
-    public ResponseEntity<ApiResponse<?>> createUser(@RequestBody UserCreateReqDTO userCreateReqDTO) {
-        ApiResponse<?> httpResponse = userService.createUser(userCreateReqDTO);
+    @PostMapping("/userLogin")//working
+    public ResponseEntity<ApiResponse<?>> loginUser(@RequestBody UserClassReqDTO userClassReqDTO){
+        ApiResponse<?> httpResponse = userService.loginUser(userClassReqDTO);
         return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
     }
 
-    // Session Token Services
-    @GetMapping("/validate-token/{sessionToken}")
-    public ResponseEntity<ApiResponse<?>> validateSessionToken(@PathVariable String sessionToken) {
-        ApiResponse<?> response = userService.validateSessionToken(sessionToken);
+
+    @GetMapping("/allUsers") //working
+    public ResponseEntity<ApiResponse<?>> getUsersByTenant(HttpServletRequest httpRequest) {
+        ApiResponse<?> httpResponse = userService.returnAllUsersByTenant((String) httpRequest.getAttribute("tenantID"));
+        return new ResponseEntity<>(httpResponse, HttpStatusCode.valueOf(httpResponse.getCode()));
+    }
+
+    @PostMapping("/userLogout")//working
+    public ResponseEntity<ApiResponse<?>> logoutUser(HttpServletRequest httpRequest) {
+        ApiResponse<?> response = userService.logoutUser((String) httpRequest.getAttribute("sessionKey"));
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @PostMapping("/logout/{sessionToken}")
-    public ResponseEntity<ApiResponse<?>> logoutUser(@PathVariable String sessionToken) {
-        ApiResponse<?> response = userService.logoutUser(sessionToken);
-        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
-    }
-
-    // Tenant Management Services
-    @GetMapping("/tenants/{id}")
-    public ResponseEntity<ApiResponse<?>> getTenantById(@PathVariable String id) {
-        ApiResponse<?> response = tenantService.getTenantById(id);
-        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
-    }
-
-    @PutMapping("/tenants/{id}")
-    public ResponseEntity<ApiResponse<?>> updateTenant(@PathVariable String id, @RequestBody TenantDTO tenantDTO) {
-        ApiResponse<?> response = tenantService.updateTenant(id, tenantDTO);
-        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
-    }
 }

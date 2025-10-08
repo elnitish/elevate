@@ -1,11 +1,14 @@
 package com.elevate.insc.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.elevate.insc.dto.SupplierClassReqDTO;
+import com.elevate.insc.entity.SupplierClass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,30 +52,17 @@ public class PurchaseOrderService {
     }
     
     @Transactional
-    public ApiResponse<?> createPurchaseOrder(PurchaseOrderReqDTO purchaseOrderReqDTO) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(purchaseOrderReqDTO.getTenantId())) {
-            return new ApiResponse<>("Tenant not found", 404, null);
+    public ApiResponse<?> createNewPurchaseOrder(String tenantID, PurchaseOrderReqDTO purchaseOrderReqDTO) {
+        // Validate input
+        if (purchaseOrderReqDTO.getItems() == null || purchaseOrderReqDTO.getItems().isEmpty()) {
+            return new ApiResponse<>("Purchase order must contain at least one item", 400, null);
         }
         
         // Validate supplier exists and belongs to tenant
-        if (!supplierRepository.existsByTenantIdAndId(purchaseOrderReqDTO.getTenantId(), purchaseOrderReqDTO.getSupplierId())) {
-            return new ApiResponse<>("Supplier not found or does not belong to this tenant", 404, null);
+        if (!supplierRepository.existsByTenantIdAndId(tenantID, purchaseOrderReqDTO.getSupplierId())) {
+            return new ApiResponse<>("Supplier not found", 404, null);
         }
-        
-        // Validate all products exist and belong to tenant
-        for (var itemDTO : purchaseOrderReqDTO.getItems()) {
-            Optional<ProductClass> productOpt = productClassRepo.findById(itemDTO.getProductId());
-            if (productOpt.isEmpty()) {
-                return new ApiResponse<>("Product with ID " + itemDTO.getProductId() + " not found", 404, null);
-            }
-            
-            ProductClass product = productOpt.get();
-            if (!product.getTenantId().equals(purchaseOrderReqDTO.getTenantId())) {
-                return new ApiResponse<>("Product does not belong to this tenant", 403, null);
-            }
-        }
-        
+
         // Generate UUID for purchase order
         String purchaseOrderId = UUID.randomUUID().toString();
         
@@ -83,7 +73,7 @@ public class PurchaseOrderService {
         // Create purchase order entity
         PurchaseOrderClass newPurchaseOrder = new PurchaseOrderClass(
             purchaseOrderId,
-            purchaseOrderReqDTO.getTenantId(),
+            tenantID, // Use session tenantID instead of DTO tenantId
             purchaseOrderReqDTO.getSupplierId(),
             orderDate,
             PurchaseOrderClass.Status.valueOf(purchaseOrderReqDTO.getStatus().toUpperCase())
@@ -96,7 +86,7 @@ public class PurchaseOrderService {
             String itemId = UUID.randomUUID().toString();
             PurchaseOrderItemClass item = new PurchaseOrderItemClass(
                 itemId,
-                purchaseOrderReqDTO.getTenantId(),
+                tenantID, // Use session tenantID instead of DTO tenantId
                 newPurchaseOrder,
                 product,
                 itemDTO.getQuantity(),
@@ -106,11 +96,15 @@ public class PurchaseOrderService {
             newPurchaseOrder.getItems().add(item);
         }
         
+        // Calculate and set the total amount on the purchase order
+        newPurchaseOrder.setTotalAmount(newPurchaseOrder.calculateTotalAmount());
+        
+        // Save purchase order first
         PurchaseOrderClass savedPurchaseOrder = purchaseOrderRepository.save(newPurchaseOrder);
         
         // Record stock movements for all items (IN movements)
         stockMovementService.recordStockMovementsForPurchaseOrder(
-            purchaseOrderReqDTO.getTenantId(), 
+            tenantID, // Use session tenantID
             purchaseOrderId, 
             purchaseOrderReqDTO.getItems()
         );
@@ -118,7 +112,7 @@ public class PurchaseOrderService {
         // Increase stock levels for all items
         for (var itemDTO : purchaseOrderReqDTO.getItems()) {
             stockLevelService.increaseStock(
-                purchaseOrderReqDTO.getTenantId(), 
+                tenantID, // Use session tenantID
                 itemDTO.getProductId(), 
                 itemDTO.getQuantity()
             );
@@ -129,7 +123,7 @@ public class PurchaseOrderService {
         return new ApiResponse<>("Purchase order created successfully", 201, responseDTO);
     }
     
-    public ApiResponse<?> getPurchaseOrdersByTenant(String tenantId) {
+    public ApiResponse<?> returnAllPurchaseOrders(String tenantId) {
         if (!tenantRepository.existsById(tenantId)) {
             return new ApiResponse<>("Tenant not found", 404, null);
         }
@@ -142,7 +136,7 @@ public class PurchaseOrderService {
         return new ApiResponse<>("Purchase orders retrieved successfully", 200, purchaseOrderDTOs);
     }
     
-    public ApiResponse<?> getPurchaseOrderById(String tenantId, String purchaseOrderId) {
+    public ApiResponse<?> returnPurchaseOrderById(String tenantId, String purchaseOrderId) {
         if (!tenantRepository.existsById(tenantId)) {
             return new ApiResponse<>("Tenant not found", 404, null);
         }
@@ -158,15 +152,10 @@ public class PurchaseOrderService {
     
     @Transactional
     public ApiResponse<?> updatePurchaseOrderStatus(String tenantId, String purchaseOrderId, String status) {
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
         Optional<PurchaseOrderClass> purchaseOrderOpt = purchaseOrderRepository.findByTenantIdAndId(tenantId, purchaseOrderId);
         if (purchaseOrderOpt.isEmpty()) {
             return new ApiResponse<>("Purchase order not found", 404, null);
         }
-        
         try {
             PurchaseOrderClass.Status newStatus = PurchaseOrderClass.Status.valueOf(status.toUpperCase());
             PurchaseOrderClass purchaseOrder = purchaseOrderOpt.get();
@@ -181,11 +170,7 @@ public class PurchaseOrderService {
         }
     }
     
-    public ApiResponse<?> getPurchaseOrdersBySupplier(String tenantId, String supplierId) {
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
+    public ApiResponse<?> returnPurchaseOrdersBySupplier(String tenantId, String supplierId) {
         List<PurchaseOrderClass> purchaseOrders = purchaseOrderRepository.findByTenantIdAndSupplierId(tenantId, supplierId);
         List<PurchaseOrderResDTO> purchaseOrderDTOs = purchaseOrders.stream()
                 .map(PurchaseOrderResDTO::new)
@@ -194,11 +179,10 @@ public class PurchaseOrderService {
         return new ApiResponse<>("Purchase orders retrieved successfully", 200, purchaseOrderDTOs);
     }
     
-    public ApiResponse<?> getPurchaseOrdersByStatus(String tenantId, String status) {
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
+    public ApiResponse<?> returnPurchaseOrdersByStatus(String tenantId, String status) {
+        if(!status.equals("PENDING")||!status.equals("RECEIVED")||!status.equals("CANCELLED")) {
+            return new ApiResponse<>("Invalid status.", 400, null);
         }
-        
         try {
             PurchaseOrderClass.Status orderStatus = PurchaseOrderClass.Status.valueOf(status.toUpperCase());
             List<PurchaseOrderClass> purchaseOrders = purchaseOrderRepository.findByTenantIdAndStatus(tenantId, orderStatus);
@@ -210,5 +194,19 @@ public class PurchaseOrderService {
         } catch (IllegalArgumentException e) {
             return new ApiResponse<>("Invalid status. Must be PENDING, RECEIVED, or CANCELLED", 400, null);
         }
+    }
+
+    public ApiResponse<?> createNewSupplier(String tenantID, SupplierClassReqDTO supplierClassReqDTO) {
+        String UUID = java.util.UUID.randomUUID().toString();
+        SupplierClass supplierClass = new SupplierClass(
+                UUID,
+                tenantID,
+                supplierClassReqDTO.getName(),
+                supplierClassReqDTO.getEmail(),
+                supplierClassReqDTO.getPhone(),
+                supplierClassReqDTO.getAddress()
+        );
+        SupplierClass newSupplier =  supplierRepository.save(supplierClass);
+        return new ApiResponse<>("Supplier created successfully", 201, newSupplier);
     }
 }

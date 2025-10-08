@@ -1,5 +1,6 @@
 package com.elevate.auth.configuration;
 
+import com.elevate.auth.entity.SessionToken;
 import com.elevate.auth.service.SessionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,11 +36,16 @@ public class SessionAuthentication implements HandlerInterceptor {
         // Check if UUID exists and is valid
         boolean isValid = sessionService.isValidSession(sessionKey);
         if (!isValid) {
+            System.out.println("Session is invalid");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Invalid session key");
             return false;
         }
-
+        System.out.println("Session valid");
+        SessionToken sessionToken = sessionService.returnTenantAndUser(sessionKey);
+        request.setAttribute("sessionKey", sessionKey);
+        request.setAttribute("tenantID", sessionToken.getTenantId());
+        request.setAttribute("role", sessionToken.getRole());
         // Allow the request to continue
         return true;
     }

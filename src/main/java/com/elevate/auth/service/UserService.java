@@ -13,7 +13,6 @@ import com.elevate.auth.configuration.TokenUUID;
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.auth.dto.UserClassReqDTO;
 import com.elevate.auth.dto.UserClassResDTO;
-import com.elevate.auth.dto.UserCreateReqDTO;
 import com.elevate.auth.entity.AuthCredentials;
 import com.elevate.auth.entity.SessionToken;
 import com.elevate.auth.entity.UserClass;
@@ -43,7 +42,7 @@ public class UserService {
     }
 
 
-    public ApiResponse<?> returnUser(UserClassReqDTO userClassReqDTO) {
+    public ApiResponse<?> loginUser(UserClassReqDTO userClassReqDTO) {
         // Check auth credentials directly
         Optional<AuthCredentials> authOpt = authCredentialsRepository.findByTenantIdAndUsername(
                 userClassReqDTO.getTenantId(),
@@ -95,7 +94,8 @@ public class UserService {
     }
     
     
-    public ApiResponse<?> getUsersByTenant(String tenantId) {
+    public ApiResponse<?> returnAllUsersByTenant(String tenantId) {
+        System.out.println(tenantId);
         // Check if tenant exists
         if(!tenantRepository.existsById(tenantId)){
             return new ApiResponse<>("Tenant not found",404,null);
@@ -123,37 +123,27 @@ public class UserService {
     
     @Transactional
     public ApiResponse<?> logoutUser(String sessionToken) {
-        if(!sessionTokenRepository.existsBySessionToken(sessionToken)){
-            return new ApiResponse<>("Session token not found",404,null);
-        }
-        
+        System.out.println(sessionToken+" this is the session which is to be deleted");
         sessionTokenRepository.deleteBySessionToken(sessionToken);
         return new ApiResponse<>("User logged out successfully",200,null);
     }
     
     @Transactional
-    public ApiResponse<?> createUser(UserCreateReqDTO userCreateReqDTO) {
+    public ApiResponse<?> createUser(UserClassReqDTO userClassReqDTO) {
         // Validate tenant exists
-        if (!tenantRepository.existsById(userCreateReqDTO.getTenantId())) {
+        if (!tenantRepository.existsById(userClassReqDTO.getTenantId())) {
             return new ApiResponse<>("Tenant not found", 404, null);
         }
         
         // Check if user already exists in this tenant
-        if (userRepository.findByTenantIdAndUsername(userCreateReqDTO.getTenantId(), userCreateReqDTO.getUsername()).isPresent()) {
+        if (userRepository.findByTenantIdAndUsername(userClassReqDTO.getTenantId(), userClassReqDTO.getUsername()).isPresent()) {
             return new ApiResponse<>("Username already exists in this tenant", 409, null);
-        }
-        
-        // Check if email already exists in this tenant (if email is provided)
-        if (userCreateReqDTO.getEmail() != null && !userCreateReqDTO.getEmail().trim().isEmpty()) {
-            if (userRepository.findByTenantIdAndEmail(userCreateReqDTO.getTenantId(), userCreateReqDTO.getEmail()).isPresent()) {
-                return new ApiResponse<>("Email already exists in this tenant", 409, null);
-            }
         }
         
         // Validate role
         UserClass.UserRole userRole;
         try {
-            userRole = UserClass.UserRole.valueOf(userCreateReqDTO.getRole().toUpperCase());
+            userRole = UserClass.UserRole.valueOf(userClassReqDTO.getRole().toUpperCase());
         } catch (IllegalArgumentException e) {
             return new ApiResponse<>("Invalid role. Must be ADMIN or USER", 400, null);
         }
@@ -162,22 +152,22 @@ public class UserService {
         String userId = java.util.UUID.randomUUID().toString();
         
         // Hash the password
-        String hashedPassword = bCryptPasswordEncoder.encode(userCreateReqDTO.getPassword());
+        String hashedPassword = bCryptPasswordEncoder.encode(userClassReqDTO.getPassword());
         
         // Create user entity
         UserClass newUser = new UserClass(
-            userId,
-            userCreateReqDTO.getTenantId(),
-            userCreateReqDTO.getUsername().trim(),
-            userCreateReqDTO.getEmail() != null ? userCreateReqDTO.getEmail().trim() : null,
-            userRole
+                userId,
+                userClassReqDTO.getTenantId(),
+                userClassReqDTO.getUsername().trim(),
+                userClassReqDTO.getEmail() != null ? userClassReqDTO.getEmail().trim() : null,
+                userRole
         );
         
         // Create auth credentials
         AuthCredentials authCredentials = new AuthCredentials(
-            userCreateReqDTO.getTenantId(),
-            userCreateReqDTO.getUsername().trim(),
-            hashedPassword
+                userClassReqDTO.getTenantId(),
+                userClassReqDTO.getUsername().trim(),
+                hashedPassword
         );
         
         // Save both user and credentials

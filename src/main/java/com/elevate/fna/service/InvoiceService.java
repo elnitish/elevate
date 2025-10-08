@@ -21,8 +21,7 @@ import com.elevate.fna.entity.InvoiceItemsClass;
 import com.elevate.fna.repository.InvoiceClassRepo;
 import com.elevate.fna.repository.PaymentClassRepo;
 import com.elevate.insc.entity.ProductClass;
-import com.elevate.insc.repository.ProductClassRepo;
-import com.elevate.insc.service.InventoryService;
+import com.elevate.insc.service.ProductService;
 import com.elevate.insc.service.StockMovementService;
 import com.elevate.insc.service.StockLevelService;
 
@@ -30,24 +29,21 @@ import com.elevate.insc.service.StockLevelService;
 public class InvoiceService {
 
     private final InvoiceClassRepo invoiceClassRepo;
-    private final ProductClassRepo productClassRepo;
     private PaymentClassRepo paymentClassRepo;
-    private InventoryService inventoryService;
+    private ProductService productService;
     private StockMovementService stockMovementService;
     private StockLevelService stockLevelService;
 
     @Autowired
     public InvoiceService(InvoiceClassRepo invoiceClassRepo,
-                          ProductClassRepo productClassRepo,
                           PaymentClassRepo paymentClassRepo,
-                          InventoryService inventoryService,
+                          ProductService productService,
                           StockMovementService stockMovementService,
                           StockLevelService stockLevelService) {
 
         this.invoiceClassRepo = invoiceClassRepo;
-        this.productClassRepo = productClassRepo;
         this.paymentClassRepo = paymentClassRepo;
-        this.inventoryService = inventoryService;
+        this.productService = productService;
         this.stockMovementService = stockMovementService;
         this.stockLevelService = stockLevelService;
     }
@@ -60,7 +56,7 @@ public class InvoiceService {
 
         // Validate all products exist and check stock availability
         for (InvoiceItemReqDTO itemDTO : dto.getItems()) {
-            Optional<ProductClass> productOpt = productClassRepo.findById(itemDTO.getProductId());
+            Optional<ProductClass> productOpt = productService.getProductById(itemDTO.getProductId());
             if (productOpt.isEmpty()) {
                 return new ApiResponse<>("Product with ID " + itemDTO.getProductId() + " not found", 404, null);
             }
@@ -93,7 +89,7 @@ public class InvoiceService {
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (InvoiceItemReqDTO itemDTO : dto.getItems()) {
-            ProductClass product = productClassRepo.findById(itemDTO.getProductId()).get();
+            ProductClass product = productService.getProductById(itemDTO.getProductId()).get();
 
             // Generate UUID for invoice item
             String invoiceItemId = java.util.UUID.randomUUID().toString();

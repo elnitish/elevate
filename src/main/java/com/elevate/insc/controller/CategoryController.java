@@ -1,6 +1,9 @@
 package com.elevate.insc.controller;
 
+import com.elevate.insc.dto.UpdateCategoryReqDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +21,7 @@ import com.elevate.insc.dto.CategoryReqDTO;
 import com.elevate.insc.service.CategoryService;
 
 @RestController
-@RequestMapping("/categories")
+@RequestMapping("/category")
 public class CategoryController {
     
     private final CategoryService categoryService;
@@ -27,31 +31,26 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
     
-    @PostMapping
-    public ResponseEntity<ApiResponse<?>> createCategory(@RequestBody CategoryReqDTO categoryReqDTO) {
-        ApiResponse<?> response = categoryService.createCategory(categoryReqDTO);
+    @PostMapping("/createCategory")//working
+    public ResponseEntity<ApiResponse<?>> createCategory(HttpServletRequest request, @RequestBody CategoryReqDTO categoryReqDTO) {
+        ApiResponse<?> response = categoryService.createCategory((String)request.getAttribute("tenantID"),categoryReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<ApiResponse<?>> getCategoriesByTenant(@PathVariable String tenantId) {
-        ApiResponse<?> response = categoryService.getCategoriesByTenant(tenantId);
+    @GetMapping("getAllCategory")//working
+    public ResponseEntity<ApiResponse<?>> getCategoriesByTenant(HttpServletRequest request) {
+        ApiResponse<?> response = categoryService.getCategoriesByTenant((String) request.getAttribute("tenantID"));
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
-    
-    @GetMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<?>> getCategoryById(@PathVariable String categoryId) {
-        ApiResponse<?> response = categoryService.getCategoryById(categoryId);
+
+
+    @PutMapping("/updateCategory")//working
+    public ResponseEntity<ApiResponse<?>> updateCategory(HttpServletRequest request, @RequestBody UpdateCategoryReqDTO updateCategoryReqDTO) {
+        ApiResponse<?> response = categoryService.updateCategory((String)request.getAttribute("tenantID"),updateCategoryReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
-    
-    @PutMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<?>> updateCategory(@PathVariable String categoryId, @RequestBody CategoryReqDTO categoryReqDTO) {
-        ApiResponse<?> response = categoryService.updateCategory(categoryId, categoryReqDTO);
-        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
-    }
-    
-    @DeleteMapping("/{categoryId}")
+
+    @DeleteMapping("/deleteCategory/{categoryId}")//working
     public ResponseEntity<ApiResponse<?>> deleteCategory(@PathVariable String categoryId) {
         ApiResponse<?> response = categoryService.deleteCategory(categoryId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));

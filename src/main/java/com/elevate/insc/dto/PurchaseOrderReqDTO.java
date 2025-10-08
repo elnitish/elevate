@@ -9,11 +9,7 @@ import lombok.Data;
 
 @Data
 public class PurchaseOrderReqDTO {
-    
-    @NotNull(message = "Tenant ID is required")
-    @Size(min = 36, max = 36, message = "Tenant ID must be a valid UUID")
-    private String tenantId;
-    
+
     @NotNull(message = "Supplier ID is required")
     @Size(min = 36, max = 36, message = "Supplier ID must be a valid UUID")
     private String supplierId;
@@ -28,8 +24,7 @@ public class PurchaseOrderReqDTO {
     public PurchaseOrderReqDTO() {
     }
     
-    public PurchaseOrderReqDTO(String tenantId, String supplierId, LocalDate orderDate, String status, List<PurchaseOrderItemReqDTO> items) {
-        this.tenantId = tenantId;
+    public PurchaseOrderReqDTO( String supplierId, LocalDate orderDate, String status, List<PurchaseOrderItemReqDTO> items) {
         this.supplierId = supplierId;
         this.orderDate = orderDate;
         this.status = status;

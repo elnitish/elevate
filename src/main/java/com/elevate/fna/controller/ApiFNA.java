@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/finance")
 public class ApiFNA {
 
     private final InvoiceService invoiceService;
@@ -24,54 +25,54 @@ public class ApiFNA {
         this.customerService = customerService;
     }
 
-    @PostMapping("/fna/createInvoice")
-    public ResponseEntity<?> createInvoice(@Valid @RequestBody InvoiceReqDTO invoiceReqDTO) {
+    @PostMapping("/invoices")
+    public ResponseEntity<?> createInvoice(@RequestBody InvoiceReqDTO invoiceReqDTO) {
         ApiResponse<?> response = invoiceService.createNewInvoice(invoiceReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/fna/tenant/{tenantId}/invoices")
-    public ResponseEntity<?> getAllInvoices(@PathVariable String tenantId, @RequestParam(required = false) String status) {
+    @GetMapping("/invoices")
+    public ResponseEntity<?> getAllInvoices(@RequestHeader("X-Session-Token") String sessionToken, @RequestParam(required = false) String status) {
         if (status == null) {
-            ApiResponse<?> response = invoiceService.returnAllInvoices(tenantId);
+            ApiResponse<?> response = invoiceService.returnAllInvoices(sessionToken);
             return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
         } else {
-            ApiResponse<?> response = invoiceService.returnInvoicesWithStatus(tenantId, status);
+            ApiResponse<?> response = invoiceService.returnInvoicesWithStatus(sessionToken, status);
             return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
         }
     }
 
-    @PutMapping("/fna/tenant/{tenantId}/invoice/{id}/{status}")
-    public ResponseEntity<?> updateInvoiceStatus(@PathVariable String tenantId, @PathVariable Long id, @PathVariable String status) {
-        ApiResponse<?> response = invoiceService.updateInvoiceStatus(tenantId, id, status);
+    @PutMapping("/invoices/{id}/{status}")
+    public ResponseEntity<?> updateInvoiceStatus(@RequestHeader("X-Session-Token") String sessionToken, @PathVariable Long id, @PathVariable String status) {
+        ApiResponse<?> response = invoiceService.updateInvoiceStatus(sessionToken, id, status);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/fna/getInvoiceStatus/{id}")
+    @GetMapping("/invoices/{id}/status")
     public ResponseEntity<?> getInvoiceStatus(@PathVariable("id") long id) {
         ApiResponse<?> response = invoiceService.returnInvoiceStatus(id);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @PostMapping("/fna/createPayment/")
+    @PostMapping("/payments")
     public ResponseEntity<?> createPayment(@RequestBody PaymentClassReqDTO  paymentClassReqDTO) {
         ApiResponse<?> response = invoiceService.createNewPayment(paymentClassReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/fna/getAllPayments")
+    @GetMapping("/payments")
     public ResponseEntity<?> getAllPayments() {
         ApiResponse<?> response = invoiceService.getAllPayments();
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @PostMapping("/fna/createCustomer")
+    @PostMapping("/customers")
     public ResponseEntity<?> createCustomer(@RequestBody CustomerClass customerClass) {
         ApiResponse<?> response = customerService.createNewCustomer(customerClass);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/fna/getAllCustomers")
+    @GetMapping("/customers")
     public ResponseEntity<?> getAllCustomers() {
         ApiResponse<?> response = customerService.returnAllCustomers();
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));

@@ -13,8 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TenantReqDTO {
 
-    private String id;
-
     @NotBlank(message = "Tenant name cannot be blank")
     @Size(min = 2, max = 255, message = "Tenant name must be between 2 and 255 characters")
     private String name;
@@ -25,7 +23,6 @@ public class TenantReqDTO {
     private String planType = "FREE";
 
     public TenantReqDTO(TenantClass tenant) {
-        this.id = tenant.getId();
         this.name = tenant.getName();
         this.email = tenant.getEmail();
         this.planType = tenant.getPlanType().name();

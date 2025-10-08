@@ -1,5 +1,7 @@
 package com.elevate.insc.controller;
 
+import com.elevate.insc.dto.UpdateProductReqDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +12,7 @@ import com.elevate.insc.dto.ProductReqDTO;
 import com.elevate.insc.service.ProductService;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/insc")
 public class ProductController {
     
     private final ProductService productService;
@@ -20,39 +22,33 @@ public class ProductController {
         this.productService = productService;
     }
     
-    @PostMapping
-    public ResponseEntity<ApiResponse<?>> createProduct(@RequestBody ProductReqDTO productReqDTO) {
-        ApiResponse<?> response = productService.createProduct(productReqDTO);
+    @PostMapping("/createProduct")//working
+    public ResponseEntity<ApiResponse<?>> createProduct(HttpServletRequest request, @RequestBody ProductReqDTO productReqDTO) {
+        ApiResponse<?> response = productService.createNewProduct(productReqDTO, (String) request.getAttribute("tenantID"));
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<ApiResponse<?>> getProductsByTenant(@PathVariable String tenantId) {
-        ApiResponse<?> response = productService.getProductsByTenant(tenantId);
+    @GetMapping("/getAllProducts")//working
+    public ResponseEntity<ApiResponse<?>> getAllProductsByTenant(HttpServletRequest request) {
+        ApiResponse<?> response = productService.returnAllProducts((String)request.getAttribute("tenantID"));
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}/category/{categoryId}")
-    public ResponseEntity<ApiResponse<?>> getProductsByCategory(@PathVariable String tenantId, @PathVariable String categoryId) {
-        ApiResponse<?> response = productService.getProductsByCategory(tenantId, categoryId);
+    @GetMapping("/getProductById/{productId}")//working
+    public ResponseEntity<ApiResponse<?>> getProductById(HttpServletRequest request,@PathVariable String productId) {
+        ApiResponse<?> response = productService.returnProductWithID((String) request.getAttribute("tenantID"),productId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}/product/{productId}")
-    public ResponseEntity<ApiResponse<?>> getProductById(@PathVariable String tenantId, @PathVariable String productId) {
-        ApiResponse<?> response = productService.getProductById(tenantId, productId);
+    @PutMapping("/updateProduct")//working
+    public ResponseEntity<ApiResponse<?>> updateProduct(HttpServletRequest request, @RequestBody UpdateProductReqDTO updateProductReqDTO) {
+        ApiResponse<?> response = productService.updateProductInDB((String) request.getAttribute("tenantID"),updateProductReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @PutMapping("/tenant/{tenantId}/product/{productId}")
-    public ResponseEntity<ApiResponse<?>> updateProduct(@PathVariable String tenantId, @PathVariable String productId, @RequestBody ProductReqDTO productReqDTO) {
-        ApiResponse<?> response = productService.updateProduct(tenantId, productId, productReqDTO);
-        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
-    }
-    
-    @DeleteMapping("/tenant/{tenantId}/product/{productId}")
-    public ResponseEntity<ApiResponse<?>> deleteProduct(@PathVariable String tenantId, @PathVariable String productId) {
-        ApiResponse<?> response = productService.deleteProduct(tenantId, productId);
+    @DeleteMapping("/deleteProductById/{productId}")//working
+    public ResponseEntity<ApiResponse<?>> deleteProduct(HttpServletRequest request,@PathVariable String productId) {
+        ApiResponse<?> response = productService.deleteProductFromDB((String)request.getAttribute("tenantID"),productId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 }

@@ -1,5 +1,6 @@
 package com.elevate.insc.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,6 +49,9 @@ public class PurchaseOrderClass {
     @Column(name = "status", nullable = false)
     private Status status = Status.PENDING;
     
+    @Column(name = "total_amount", precision = 10, scale = 2)
+    private BigDecimal totalAmount = BigDecimal.ZERO;
+    
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -69,6 +73,19 @@ public class PurchaseOrderClass {
         this.supplierId = supplierId;
         this.orderDate = orderDate;
         this.status = status;
+    }
+    
+    /**
+     * Calculate total amount from all items
+     */
+    public BigDecimal calculateTotalAmount() {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        
+        return items.stream()
+                .map(PurchaseOrderItemClass::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
     public enum Status {

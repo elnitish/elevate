@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +18,7 @@ import com.elevate.fna.dto.PaymentReqDTO;
 import com.elevate.fna.service.PaymentService;
 
 @RestController
-@RequestMapping("/payments")
+@RequestMapping("/api/payments")
 public class PaymentController {
     
     private final PaymentService paymentService;
@@ -33,41 +34,41 @@ public class PaymentController {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}/invoice/{invoiceId}")
-    public ResponseEntity<ApiResponse<?>> getPaymentsByInvoice(@PathVariable String tenantId, @PathVariable Long invoiceId) {
-        ApiResponse<?> response = paymentService.getPaymentsByInvoice(tenantId, invoiceId);
+    @GetMapping("/invoice/{invoiceId}")
+    public ResponseEntity<ApiResponse<?>> getPaymentsByInvoice(@RequestHeader("X-Session-Token") String sessionToken, @PathVariable Long invoiceId) {
+        ApiResponse<?> response = paymentService.getPaymentsByInvoice(sessionToken, invoiceId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}/payment/{paymentId}")
-    public ResponseEntity<ApiResponse<?>> getPaymentById(@PathVariable String tenantId, @PathVariable String paymentId) {
-        ApiResponse<?> response = paymentService.getPaymentById(tenantId, paymentId);
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<ApiResponse<?>> getPaymentById(@RequestHeader("X-Session-Token") String sessionToken, @PathVariable String paymentId) {
+        ApiResponse<?> response = paymentService.getPaymentById(sessionToken, paymentId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<ApiResponse<?>> getAllPaymentsByTenant(@PathVariable String tenantId) {
-        ApiResponse<?> response = paymentService.getAllPaymentsByTenant(tenantId);
+    @GetMapping
+    public ResponseEntity<ApiResponse<?>> getAllPaymentsByTenant(@RequestHeader("X-Session-Token") String sessionToken) {
+        ApiResponse<?> response = paymentService.getAllPaymentsByTenant(sessionToken);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @GetMapping("/tenant/{tenantId}/invoice/{invoiceId}/summary")
-    public ResponseEntity<ApiResponse<?>> getPaymentSummary(@PathVariable String tenantId, @PathVariable Long invoiceId) {
-        ApiResponse<?> response = paymentService.getPaymentSummary(tenantId, invoiceId);
+    @GetMapping("/invoice/{invoiceId}/summary")
+    public ResponseEntity<ApiResponse<?>> getPaymentSummary(@RequestHeader("X-Session-Token") String sessionToken, @PathVariable Long invoiceId) {
+        ApiResponse<?> response = paymentService.getPaymentSummary(sessionToken, invoiceId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @PutMapping("/tenant/{tenantId}/payment/{paymentId}")
-    public ResponseEntity<ApiResponse<?>> updatePayment(@PathVariable String tenantId, 
+    @PutMapping("/{paymentId}")
+    public ResponseEntity<ApiResponse<?>> updatePayment(@RequestHeader("X-Session-Token") String sessionToken, 
                                                        @PathVariable String paymentId, 
                                                        @RequestBody PaymentReqDTO paymentReqDTO) {
-        ApiResponse<?> response = paymentService.updatePayment(tenantId, paymentId, paymentReqDTO);
+        ApiResponse<?> response = paymentService.updatePayment(sessionToken, paymentId, paymentReqDTO);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
     
-    @DeleteMapping("/tenant/{tenantId}/payment/{paymentId}")
-    public ResponseEntity<ApiResponse<?>> deletePayment(@PathVariable String tenantId, @PathVariable String paymentId) {
-        ApiResponse<?> response = paymentService.deletePayment(tenantId, paymentId);
+    @DeleteMapping("/{paymentId}")
+    public ResponseEntity<ApiResponse<?>> deletePayment(@RequestHeader("X-Session-Token") String sessionToken, @PathVariable String paymentId) {
+        ApiResponse<?> response = paymentService.deletePayment(sessionToken, paymentId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 }

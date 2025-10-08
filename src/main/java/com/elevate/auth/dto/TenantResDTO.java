@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TenantDTO {
+public class TenantResDTO {
     
     private String id;
     
@@ -24,7 +24,7 @@ public class TenantDTO {
     
     private String planType = "FREE";
     
-    public TenantDTO(TenantClass tenant) {
+    public TenantResDTO(TenantClass tenant) {
         this.id = tenant.getId();
         this.name = tenant.getName();
         this.email = tenant.getEmail();

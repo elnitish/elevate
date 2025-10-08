@@ -25,10 +25,10 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**") // Apply to all paths
                 .excludePathPatterns(
                     // Authentication endpoints (no session required)
-                    "/auth/login",
-                    "/auth/register",
-                    "/auth/users",  // User creation endpoint
-                    
+                    "/auth/tenantRegister", //create a new tenant
+                    "/auth/createUser",  // User creation endpoint
+                    "/auth/userLogin", //login a user in an organisation
+
                     // Public endpoints that don't require authentication
                     "/auth/validate-token/**",  // Token validation endpoint
                     

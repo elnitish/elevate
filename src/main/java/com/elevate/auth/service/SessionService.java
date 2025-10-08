@@ -19,4 +19,12 @@ public class SessionService {
         return token.isPresent();
     }
 
+    public SessionToken returnTenantAndUser(String sessionToken){
+        Optional<SessionToken> token = sessionTokenRepository.findBySessionToken(sessionToken);
+        if(token.isPresent()){
+            return token.get();
+        }
+        return null;
+    }
+
 }

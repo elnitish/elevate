@@ -7,11 +7,7 @@ import lombok.Data;
 
 @Data
 public class CategoryReqDTO {
-    
-    @NotNull(message = "Tenant ID is required")
-    @Size(min = 36, max = 36, message = "Tenant ID must be a valid UUID")
-    private String tenantId;
-    
+
     @NotBlank(message = "Category name is required")
     @Size(min = 1, max = 100, message = "Category name must be between 1 and 100 characters")
     private String name;
@@ -19,8 +15,7 @@ public class CategoryReqDTO {
     public CategoryReqDTO() {
     }
     
-    public CategoryReqDTO(String tenantId, String name) {
-        this.tenantId = tenantId;
+    public CategoryReqDTO(String name) {
         this.name = name;
     }
 }

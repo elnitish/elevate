@@ -30,14 +30,6 @@ public class CategoryClass {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
     
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-    
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-    
     public CategoryClass() {
     }
     

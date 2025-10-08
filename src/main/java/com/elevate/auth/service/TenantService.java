@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.dto.TenantDTO;
+import com.elevate.auth.dto.TenantResDTO;
 import com.elevate.auth.dto.TenantReqDTO;
 import com.elevate.auth.entity.TenantClass;
 import com.elevate.auth.repository.TenantRepository;
@@ -24,13 +24,13 @@ public class TenantService {
     public ApiResponse<?> getTenantById(String id) {
         Optional<TenantClass> tenant = tenantRepository.findById(id);
         if (tenant.isPresent()) {
-            TenantDTO tenantDTO = new TenantDTO(tenant.get());
-            return new ApiResponse<>("Tenant found", 200, tenantDTO);
+            TenantResDTO tenantResDTO = new TenantResDTO(tenant.get());
+            return new ApiResponse<>("Tenant found", 200, tenantResDTO);
         }
         return new ApiResponse<>("Tenant not found", 404, null);
     }
 
-    public ApiResponse<?> updateTenant(String id, TenantDTO tenantDTO) {
+    public ApiResponse<?> updateTenant(String id, TenantResDTO tenantResDTO) {
         Optional<TenantClass> tenantOpt = tenantRepository.findById(id);
         if (tenantOpt.isEmpty()) {
             return new ApiResponse<>("Tenant not found", 404, null);
@@ -39,23 +39,23 @@ public class TenantService {
         TenantClass tenant = tenantOpt.get();
         
         // Check if name is being changed and if new name already exists
-        if (!tenant.getName().equals(tenantDTO.getName()) && 
-            tenantRepository.existsByName(tenantDTO.getName())) {
+        if (!tenant.getName().equals(tenantResDTO.getName()) &&
+            tenantRepository.existsByName(tenantResDTO.getName())) {
             return new ApiResponse<>("Tenant name already exists", 409, null);
         }
         
         // Check if email is being changed and if new email already exists
-        if (tenantDTO.getEmail() != null && !tenantDTO.getEmail().isEmpty() &&
-            !tenant.getEmail().equals(tenantDTO.getEmail()) && 
-            tenantRepository.existsByEmail(tenantDTO.getEmail())) {
+        if (tenantResDTO.getEmail() != null && !tenantResDTO.getEmail().isEmpty() &&
+            !tenant.getEmail().equals(tenantResDTO.getEmail()) &&
+            tenantRepository.existsByEmail(tenantResDTO.getEmail())) {
             return new ApiResponse<>("Email already exists", 409, null);
         }
         
-        tenant.setName(tenantDTO.getName());
-        tenant.setEmail(tenantDTO.getEmail());
+        tenant.setName(tenantResDTO.getName());
+        tenant.setEmail(tenantResDTO.getEmail());
         
         TenantClass updatedTenant = tenantRepository.save(tenant);
-        TenantDTO responseDTO = new TenantDTO(updatedTenant);
+        TenantResDTO responseDTO = new TenantResDTO(updatedTenant);
         
         return new ApiResponse<>("Tenant updated successfully", 200, responseDTO);
     }
@@ -72,7 +72,7 @@ public class TenantService {
         );
         
         TenantClass savedTenant = tenantRepository.save(newTenant);
-        TenantDTO responseDTO = new TenantDTO(savedTenant);
-        return new ApiResponse<>("Tenant created successfully", 200, responseDTO);
+        TenantResDTO responseDTO = new TenantResDTO(savedTenant);
+        return new ApiResponse<>("Tenant created successfully", 201, responseDTO);
     }
 }

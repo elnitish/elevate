@@ -1,208 +1,140 @@
 package com.elevate.insc.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
+import com.elevate.insc.dto.ProductReqDTO;
+import com.elevate.insc.dto.UpdateProductReqDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.repository.TenantRepository;
-import com.elevate.insc.dto.ProductReqDTO;
-import com.elevate.insc.dto.ProductResDTO;
+import com.elevate.fna.dto.InvoiceItemReqDTO;
 import com.elevate.insc.entity.ProductClass;
+import com.elevate.insc.entity.PurchaseOrderClass;
+import com.elevate.insc.entity.PurchaseOrderItemClass;
 import com.elevate.insc.repository.ProductClassRepo;
 import com.elevate.insc.repository.CategoryRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductService {
-    
-    private final ProductClassRepo productClassRepo;
-    private final CategoryRepository categoryRepository;
-    private final TenantRepository tenantRepository;
-    private final StockLevelService stockLevelService;
-    
+
+    private ProductClassRepo productClassRepo;
+    private StockLevelService stockLevelService;
+    private CategoryRepository categoryRepository;
+
     @Autowired
-    public ProductService(ProductClassRepo productClassRepo, 
-                         CategoryRepository categoryRepository,
-                         TenantRepository tenantRepository,
-                         StockLevelService stockLevelService) {
+    public ProductService(ProductClassRepo productClassRepo, StockLevelService stockLevelService, CategoryRepository categoryRepository) {
         this.productClassRepo = productClassRepo;
-        this.categoryRepository = categoryRepository;
-        this.tenantRepository = tenantRepository;
         this.stockLevelService = stockLevelService;
+        this.categoryRepository = categoryRepository;
     }
-    
+
     @Transactional
-    public ApiResponse<?> createProduct(ProductReqDTO productReqDTO) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(productReqDTO.getTenantId())) {
-            return new ApiResponse<>("Tenant not found", 404, null);
+    public ApiResponse<?> createNewProduct(ProductReqDTO product, String tenantID) {
+        // Validate that the category exists
+        if (!categoryRepository.existsById(product.getCategoryId())) {
+            return new ApiResponse<>("Category with ID " + product.getCategoryId() + " does not exist. Please create a category first.", 400, null);
         }
         
-        // Validate category exists and belongs to tenant
-        if (!categoryRepository.existsById(productReqDTO.getCategoryId())) {
-            return new ApiResponse<>("Category not found", 404, null);
-        }
+        // Generate a new UUID for the product
+        String productId = java.util.UUID.randomUUID().toString();
+        System.out.println(tenantID);
         
-        // Check if product name already exists in this tenant and category
-        if (productClassRepo.existsByTenantIdAndCategoryIdAndName(
-            productReqDTO.getTenantId(), 
-            productReqDTO.getCategoryId(), 
-            productReqDTO.getName())) {
-            return new ApiResponse<>("Product name already exists in this category", 409, null);
-        }
-        
-        // Generate UUID for product
-        String productId = UUID.randomUUID().toString();
-        
-        // Create product entity
-        ProductClass newProduct = new ProductClass(
+        // Create the ProductClass entity with all required fields
+        ProductClass productClass = new ProductClass(
             productId,
-            productReqDTO.getTenantId(),
-            productReqDTO.getCategoryId(),
-            productReqDTO.getName().trim(),
-            productReqDTO.getDescription(),
-            productReqDTO.getCostPrice(),
-            productReqDTO.getSellingPrice()
+            tenantID,
+            product.getCategoryId(),
+            product.getName(),
+            product.getDescription(),
+            product.getCostPrice(),
+            product.getSellingPrice()
         );
         
-        ProductClass savedProduct = productClassRepo.save(newProduct);
+        // Save the product to database
+        ProductClass newProduct = productClassRepo.save(productClass);
         
-        // Create initial stock level (quantity = 0) for the new product
-        stockLevelService.createInitialStockLevel(productReqDTO.getTenantId(), productId);
+        // Create initial stock level for the product
+        stockLevelService.createInitialStockLevel(tenantID, productId);
         
-        ProductResDTO responseDTO = new ProductResDTO(savedProduct);
-        
-        return new ApiResponse<>("Product created successfully", 201, responseDTO);
+        return new ApiResponse<>("Product created successfully", 200, newProduct);
+    }
+
+    public ApiResponse<?> returnAllProducts(String tenantID) {
+        List<ProductClass> allProducts = productClassRepo.findByTenantId(tenantID);
+        return new ApiResponse<>("All products returned successfully",200,allProducts);
+    }
+
+    public ApiResponse<?> returnProductWithID(String tenantID, String productId) {
+        Optional<ProductClass> product = productClassRepo.findByTenantIdAndId(tenantID,productId);
+        return new ApiResponse<>("All products returned successfully",200,product.get());
     }
     
-    public ApiResponse<?> getProductsByTenant(String tenantId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
-        List<ProductClass> products = productClassRepo.findByTenantId(tenantId);
-        List<ProductResDTO> productDTOs = products.stream()
-                .map(ProductResDTO::new)
-                .collect(Collectors.toList());
-        
-        return new ApiResponse<>("Products retrieved successfully", 200, productDTOs);
+    public Optional<ProductClass> getProductById(String productId) {
+        return productClassRepo.findById(productId);
     }
-    
-    public ApiResponse<?> getProductsByCategory(String tenantId, String categoryId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
-        List<ProductClass> products = productClassRepo.findByTenantIdAndCategoryId(tenantId, categoryId);
-        List<ProductResDTO> productDTOs = products.stream()
-                .map(ProductResDTO::new)
-                .collect(Collectors.toList());
-        
-        return new ApiResponse<>("Products retrieved successfully", 200, productDTOs);
+
+    public ApiResponse<?> returnAllProductStock() {
+        // This method should be updated to use the new StockLevelService
+        // For now, return a message indicating it needs to be updated
+        return new ApiResponse<>("This method needs to be updated to use StockLevelService",200,null);
     }
-    
-    public ApiResponse<?> getProductById(String tenantId, String productId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
+
+    public void addStock(PurchaseOrderClass order) {
+        List<PurchaseOrderItemClass> items = order.getItems();
+        for(PurchaseOrderItemClass item : items) {
+            ProductClass product = item.getProduct();
+            // Use the new StockLevelService to increase stock
+            stockLevelService.increaseStock(order.getTenantId(), product.getId(), item.getQuantity());
         }
-        
-        Optional<ProductClass> productOpt = productClassRepo.findById(productId);
-        if (productOpt.isEmpty()) {
+    }
+
+    public void deductStock(List<InvoiceItemReqDTO> items) {
+        for (InvoiceItemReqDTO item : items) {
+            Optional<ProductClass> product = productClassRepo.findById(item.getProductId());
+            if (product.isPresent()) {
+                // Use the new StockLevelService to decrease stock
+                stockLevelService.decreaseStock(product.get().getTenantId(), item.getProductId(), item.getQuantity());
+            }
+        }
+    }
+
+    public ApiResponse<?> updateProductInDB(String tenantID, UpdateProductReqDTO updateProductReqDTO) {
+        Optional<ProductClass> product = productClassRepo.findByTenantIdAndId(tenantID, updateProductReqDTO.getId());
+        if(product.isEmpty()) {
             return new ApiResponse<>("Product not found", 404, null);
         }
-        
-        ProductClass product = productOpt.get();
-        
-        // Verify product belongs to tenant
-        if (!product.getTenantId().equals(tenantId)) {
-            return new ApiResponse<>("Product does not belong to this tenant", 403, null);
+        ProductClass productClass = product.get();
+        if(!updateProductReqDTO.getName().isEmpty()) {
+            productClass.setName(updateProductReqDTO.getName());
         }
-        
-        ProductResDTO responseDTO = new ProductResDTO(product);
-        return new ApiResponse<>("Product retrieved successfully", 200, responseDTO);
+        if(!updateProductReqDTO.getDescription().isEmpty()) {
+            productClass.setDescription(updateProductReqDTO.getDescription());
+        }
+        if(!updateProductReqDTO.getCostPrice().equals(BigDecimal.ZERO)) {
+            productClass.setCostPrice(updateProductReqDTO.getCostPrice());
+        }
+        if(!updateProductReqDTO.getSellingPrice().equals(BigDecimal.ZERO)) {
+            productClass.setSellingPrice(updateProductReqDTO.getSellingPrice());
+        }
+        if(!updateProductReqDTO.getCategoryId().isEmpty()) {
+            productClass.setCategoryId(updateProductReqDTO.getCategoryId());
+        }
+        ProductClass updatedProduct = productClassRepo.save(productClass);
+        return new ApiResponse<>("Product updated successfully", 201, updatedProduct);
+
     }
-    
-    @Transactional
-    public ApiResponse<?> updateProduct(String tenantId, String productId, ProductReqDTO productReqDTO) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
-        Optional<ProductClass> productOpt = productClassRepo.findById(productId);
-        if (productOpt.isEmpty()) {
+
+    public ApiResponse<?> deleteProductFromDB(String tenantID, String productId) {
+        Optional<ProductClass> product = productClassRepo.findByTenantIdAndId(tenantID, productId);
+        if(product.isEmpty()) {
             return new ApiResponse<>("Product not found", 404, null);
         }
-        
-        ProductClass product = productOpt.get();
-        
-        // Verify product belongs to tenant
-        if (!product.getTenantId().equals(tenantId)) {
-            return new ApiResponse<>("Product does not belong to this tenant", 403, null);
-        }
-        
-        // Validate category exists
-        if (!categoryRepository.existsById(productReqDTO.getCategoryId())) {
-            return new ApiResponse<>("Category not found", 404, null);
-        }
-        
-        // Check if new name already exists in this tenant and category (excluding current product)
-        if (!product.getName().equals(productReqDTO.getName()) && 
-            productClassRepo.existsByTenantIdAndCategoryIdAndName(
-                productReqDTO.getTenantId(), 
-                productReqDTO.getCategoryId(), 
-                productReqDTO.getName())) {
-            return new ApiResponse<>("Product name already exists in this category", 409, null);
-        }
-        
-        // Update product fields
-        product.setCategoryId(productReqDTO.getCategoryId());
-        product.setName(productReqDTO.getName().trim());
-        product.setDescription(productReqDTO.getDescription());
-        product.setCostPrice(productReqDTO.getCostPrice());
-        product.setSellingPrice(productReqDTO.getSellingPrice());
-        
-        ProductClass updatedProduct = productClassRepo.save(product);
-        ProductResDTO responseDTO = new ProductResDTO(updatedProduct);
-        
-        return new ApiResponse<>("Product updated successfully", 200, responseDTO);
-    }
-    
-    @Transactional
-    public ApiResponse<?> deleteProduct(String tenantId, String productId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
-        Optional<ProductClass> productOpt = productClassRepo.findById(productId);
-        if (productOpt.isEmpty()) {
-            return new ApiResponse<>("Product not found", 404, null);
-        }
-        
-        ProductClass product = productOpt.get();
-        
-        // Verify product belongs to tenant
-        if (!product.getTenantId().equals(tenantId)) {
-            return new ApiResponse<>("Product does not belong to this tenant", 403, null);
-        }
-        
-        // Check if product has stock (optional business rule)
-        Integer currentStock = stockLevelService.getCurrentStock(tenantId, productId);
-        if (currentStock > 0) {
-            return new ApiResponse<>("Cannot delete product with existing stock. Current stock: " + currentStock, 400, null);
-        }
-        
-        productClassRepo.deleteById(productId);
-        
+        ProductClass productClass = product.get();
+        productClassRepo.delete(productClass);
         return new ApiResponse<>("Product deleted successfully", 200, null);
     }
 }
