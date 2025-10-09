@@ -33,7 +33,7 @@ public class InvoiceClass {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "invoice_id")
-    private Long invoiceId;
+    private String invoiceId;
 
     @Column(name = "tenant_id", nullable = false, length = 36)
     private String tenantId;
@@ -55,7 +55,7 @@ public class InvoiceClass {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.PENDING;
+    private Status status ;
 
     @Column(name = "date")
     private LocalDate date;

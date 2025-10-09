@@ -36,55 +36,33 @@ public class PaymentService {
     }
     
     @Transactional
-    public ApiResponse<?> createPayment(PaymentReqDTO paymentReqDTO) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(paymentReqDTO.getTenantId())) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
+    public ApiResponse<?> createPayment(String tenantId, PaymentReqDTO paymentReqDTO) {
         // Validate invoice exists and belongs to tenant
-        Optional<InvoiceClass> invoiceOpt = invoiceClassRepo.findById(paymentReqDTO.getInvoiceId());
+        Optional<InvoiceClass> invoiceOpt = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId,paymentReqDTO.getInvoiceId());
         if (invoiceOpt.isEmpty()) {
             return new ApiResponse<>("Invoice not found", 404, null);
         }
         
         InvoiceClass invoice = invoiceOpt.get();
-        if (!invoice.getTenantId().equals(paymentReqDTO.getTenantId())) {
-            return new ApiResponse<>("Invoice does not belong to this tenant", 403, null);
-        }
-        
         // Validate payment method
         try {
             PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase());
         } catch (IllegalArgumentException e) {
             return new ApiResponse<>("Invalid payment method. Must be CASH, CARD, BANK_TRANSFER, or UPI", 400, null);
         }
-        
-        // Check if payment amount exceeds remaining amount
-        BigDecimal totalPaid = paymentClassRepo.getTotalPaymentsByTenantAndInvoice(
-            paymentReqDTO.getTenantId(), paymentReqDTO.getInvoiceId());
-        if (totalPaid == null) {
-            totalPaid = BigDecimal.ZERO;
-        }
-        
-        BigDecimal remainingAmount = invoice.getTotalAmount().subtract(totalPaid);
-        if (paymentReqDTO.getAmount().compareTo(remainingAmount) > 0) {
-            return new ApiResponse<>("Payment amount exceeds remaining amount. Remaining: " + remainingAmount, 400, null);
-        }
-        
         // Generate UUID for payment
         String paymentId = UUID.randomUUID().toString();
         
         // Create payment entity
         PaymentClass newPayment = new PaymentClass(
             paymentId,
-            paymentReqDTO.getTenantId(),
+            tenantId,
             paymentReqDTO.getInvoiceId(),
             paymentReqDTO.getAmount(),
             PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase()),
             paymentReqDTO.getTransactionRef()
         );
-        
+        invoice.setRemainingAmount(invoice.getRemainingAmount().subtract(newPayment.getAmount()));
         PaymentClass savedPayment = paymentClassRepo.save(newPayment);
         PaymentResDTO responseDTO = new PaymentResDTO(savedPayment);
         
@@ -92,11 +70,6 @@ public class PaymentService {
     }
     
     public ApiResponse<?> getPaymentsByInvoice(String tenantId, Long invoiceId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
         List<PaymentClass> payments = paymentClassRepo.findByTenantIdAndInvoiceId(tenantId, invoiceId);
         List<PaymentResDTO> paymentDTOs = payments.stream()
                 .map(PaymentResDTO::new)
@@ -106,11 +79,6 @@ public class PaymentService {
     }
     
     public ApiResponse<?> getPaymentById(String tenantId, String paymentId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
         Optional<PaymentClass> paymentOpt = paymentClassRepo.findByTenantIdAndId(tenantId, paymentId);
         if (paymentOpt.isEmpty()) {
             return new ApiResponse<>("Payment not found", 404, null);
@@ -120,12 +88,7 @@ public class PaymentService {
         return new ApiResponse<>("Payment retrieved successfully", 200, responseDTO);
     }
     
-    public ApiResponse<?> getAllPaymentsByTenant(String tenantId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
+    public ApiResponse<?> returnAllPayments(String tenantId) {
         List<PaymentClass> payments = paymentClassRepo.findByTenantId(tenantId);
         List<PaymentResDTO> paymentDTOs = payments.stream()
                 .map(PaymentResDTO::new)
@@ -135,50 +98,20 @@ public class PaymentService {
     }
     
     @Transactional
-    public ApiResponse<?> updatePayment(String tenantId, String paymentId, PaymentReqDTO paymentReqDTO) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
-        Optional<PaymentClass> paymentOpt = paymentClassRepo.findByTenantIdAndId(tenantId, paymentId);
-        if (paymentOpt.isEmpty()) {
-            return new ApiResponse<>("Payment not found", 404, null);
-        }
-        
-        PaymentClass payment = paymentOpt.get();
-        
-        // Validate payment method
-        try {
-            PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return new ApiResponse<>("Invalid payment method. Must be CASH, CARD, BANK_TRANSFER, or UPI", 400, null);
-        }
-        
-        // Update fields
-        payment.setAmount(paymentReqDTO.getAmount());
-        payment.setMethod(PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase()));
-        payment.setTransactionRef(paymentReqDTO.getTransactionRef());
-        
-        PaymentClass updatedPayment = paymentClassRepo.save(payment);
-        PaymentResDTO responseDTO = new PaymentResDTO(updatedPayment);
-        
-        return new ApiResponse<>("Payment updated successfully", 200, responseDTO);
-    }
-    
-    @Transactional
     public ApiResponse<?> deletePayment(String tenantId, String paymentId) {
-        // Validate tenant exists
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        
         Optional<PaymentClass> paymentOpt = paymentClassRepo.findByTenantIdAndId(tenantId, paymentId);
         if (paymentOpt.isEmpty()) {
             return new ApiResponse<>("Payment not found", 404, null);
         }
-        
+        PaymentClass paymentClass = paymentOpt.get();
+        Optional<InvoiceClass> invoice = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId,paymentClass.getInvoiceId());
+        if (invoice.isPresent()){
+            InvoiceClass invoiceClass = invoice.get();
+            invoiceClass.setRemainingAmount(invoiceClass.getRemainingAmount().add(paymentClass.getAmount()));
+            invoiceClassRepo.save(invoiceClass);
+        }
         paymentClassRepo.deleteById(paymentId);
+
         return new ApiResponse<>("Payment deleted successfully", 200, null);
     }
     

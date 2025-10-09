@@ -11,9 +11,6 @@ import lombok.Data;
 @Data
 public class InvoiceItemReqDTO {
     
-    @NotNull(message = "Tenant ID is required")
-    @Size(min = 36, max = 36, message = "Tenant ID must be a valid UUID")
-    private String tenantId;
     
     @NotNull(message = "Invoice ID is required")
     private Long invoiceId;
@@ -33,8 +30,7 @@ public class InvoiceItemReqDTO {
     public InvoiceItemReqDTO() {
     }
     
-    public InvoiceItemReqDTO(String tenantId, Long invoiceId, String productId, Integer quantity, BigDecimal unitPrice) {
-        this.tenantId = tenantId;
+    public InvoiceItemReqDTO(Long invoiceId, String productId, Integer quantity, BigDecimal unitPrice) {
         this.invoiceId = invoiceId;
         this.productId = productId;
         this.quantity = quantity;

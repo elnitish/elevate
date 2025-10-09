@@ -2,15 +2,13 @@ package com.elevate.fna.dto;
 
 import java.util.List;
 
+import com.elevate.fna.entity.InvoiceClass;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class InvoiceReqDTO {
-    @NotNull
-    @Size(min = 36, max = 36, message = "Tenant ID must be a valid UUID")
-    private String tenantId;   // tenant ID for multi-tenant support
     
     @NotNull
     @Size(min = 1, max = 255, message = "Name must be between 1 and 255 characters")
@@ -25,6 +23,9 @@ public class InvoiceReqDTO {
     
     @NotNull
     private String date;       // invoice date (yyyy-MM-dd)
+
+    @NotNull
+    private InvoiceClass.Status status;
     
     @NotNull
     private List<InvoiceItemReqDTO> items;  // list of products in this invoice

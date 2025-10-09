@@ -29,7 +29,7 @@ public class StockMovementClass {
     private String purchaseOrderId;
     
     @Column(name = "invoice_id")
-    private Long invoiceId;
+    private String invoiceId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
@@ -49,8 +49,8 @@ public class StockMovementClass {
         IN, OUT
     }
     
-    public StockMovementClass(String id, String tenantId, String productId, String purchaseOrderId, 
-                             Long invoiceId, Type type, Integer quantity, String reference) {
+    public StockMovementClass(String id, String tenantId, String productId, String purchaseOrderId,
+                              String invoiceId, Type type, Integer quantity, String reference) {
         this.id = id;
         this.tenantId = tenantId;
         this.productId = productId;

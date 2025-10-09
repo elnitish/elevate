@@ -33,7 +33,7 @@ public class PaymentClass {
     private String tenantId;
 
     @Column(name = "invoice_id", nullable = false)
-    private Long invoiceId;
+    private String invoiceId;
 
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
@@ -49,7 +49,7 @@ public class PaymentClass {
     @Column(name = "transaction_ref", length = 100)
     private String transactionRef;
 
-    public PaymentClass(String id, String tenantId, Long invoiceId, BigDecimal amount, Method method, String transactionRef) {
+    public PaymentClass(String id, String tenantId, String invoiceId, BigDecimal amount, Method method, String transactionRef) {
         this.id = id;
         this.tenantId = tenantId;
         this.invoiceId = invoiceId;

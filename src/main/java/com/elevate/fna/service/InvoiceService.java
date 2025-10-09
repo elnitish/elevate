@@ -15,15 +15,15 @@ import com.elevate.auth.dto.ApiResponse;
 import com.elevate.fna.dto.InvoiceItemReqDTO;
 import com.elevate.fna.dto.InvoiceReqDTO;
 import com.elevate.fna.dto.InvoiceResDTO;
-import com.elevate.fna.dto.PaymentClassReqDTO;
 import com.elevate.fna.entity.InvoiceClass;
 import com.elevate.fna.entity.InvoiceItemsClass;
 import com.elevate.fna.repository.InvoiceClassRepo;
 import com.elevate.fna.repository.PaymentClassRepo;
 import com.elevate.insc.entity.ProductClass;
+import com.elevate.insc.entity.StockLevelClass;
 import com.elevate.insc.service.ProductService;
-import com.elevate.insc.service.StockMovementService;
 import com.elevate.insc.service.StockLevelService;
+import com.elevate.insc.service.StockMovementService;
 
 @Service
 public class InvoiceService {
@@ -48,36 +48,18 @@ public class InvoiceService {
         this.stockLevelService = stockLevelService;
     }
 
-    public ApiResponse<?> createNewInvoice(InvoiceReqDTO dto) {
+    public ApiResponse<?> createNewInvoice(String tenantId, InvoiceReqDTO dto) {
         // Validate input
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
             return new ApiResponse<>("Invoice must contain at least one item", 400, null);
         }
 
-        // Validate all products exist and check stock availability
-        for (InvoiceItemReqDTO itemDTO : dto.getItems()) {
-            Optional<ProductClass> productOpt = productService.getProductById(itemDTO.getProductId());
-            if (productOpt.isEmpty()) {
-                return new ApiResponse<>("Product with ID " + itemDTO.getProductId() + " not found", 404, null);
-            }
-            
-            ProductClass product = productOpt.get();
-            // Validate product belongs to the same tenant
-            if (!product.getTenantId().equals(dto.getTenantId())) {
-                return new ApiResponse<>("Product does not belong to this tenant", 403, null);
-            }
-            
-            // Check stock availability
-            if (!stockLevelService.hasSufficientStock(dto.getTenantId(), itemDTO.getProductId(), itemDTO.getQuantity())) {
-                return new ApiResponse<>("Insufficient stock for product " + product.getName(), 400, null);
-            }
-        }
-
         InvoiceClass invoice = new InvoiceClass();
-        invoice.setTenantId(dto.getTenantId());
+        invoice.setTenantId(tenantId);
         invoice.setName(dto.getName());
         invoice.setEmail(dto.getEmail());
         invoice.setPhone(dto.getPhone());
+        invoice.setStatus(dto.getStatus());
 
         try {
             invoice.setDate(LocalDate.parse(dto.getDate()));
@@ -87,9 +69,27 @@ public class InvoiceService {
 
         List<InvoiceItemsClass> items = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
+        
+        // Generate a temporary invoice ID for stock movements
+        String tempInvoiceId = java.util.UUID.randomUUID().toString();
 
         for (InvoiceItemReqDTO itemDTO : dto.getItems()) {
-            ProductClass product = productService.getProductById(itemDTO.getProductId()).get();
+            // Validate product exists and belongs to tenant
+            Optional<ProductClass> productOpt = productService.getProductById(itemDTO.getProductId());
+            ProductClass product = productOpt.get();
+            // Validate quantity
+            if (itemDTO.getQuantity() == null || itemDTO.getQuantity() <= 0) {
+                return new ApiResponse<>("Invalid quantity for product: " + itemDTO.getProductId(), 400, null);
+            }
+            
+            // Check stock availability before creating invoice
+            Optional<StockLevelClass> stockLevelOpt = stockLevelService.getStockLevel(tenantId, itemDTO.getProductId());
+            Integer availableStock = stockLevelOpt.map(StockLevelClass::getQuantity).orElse(0);
+            if (availableStock < itemDTO.getQuantity()) {
+                return new ApiResponse<>("Insufficient stock for product: " + product.getName() + 
+                    ". Available: " + availableStock + 
+                    ", Required: " + itemDTO.getQuantity(), 400, null);
+            }
 
             // Generate UUID for invoice item
             String invoiceItemId = java.util.UUID.randomUUID().toString();
@@ -99,7 +99,7 @@ public class InvoiceService {
             
             InvoiceItemsClass item = new InvoiceItemsClass(
                 invoiceItemId,
-                dto.getTenantId(),
+                tenantId,
                 invoice,
                 product,
                 itemDTO.getQuantity(),
@@ -111,21 +111,22 @@ public class InvoiceService {
             totalAmount = totalAmount.add(
                     unitPrice.multiply(BigDecimal.valueOf(itemDTO.getQuantity()))
             );
+            
+            // Deduct stock and record stock movement for this item
+            stockLevelService.decreaseStock(tenantId, itemDTO.getProductId(), itemDTO.getQuantity());
+            stockMovementService.recordStockMovementForInvoice(tenantId, itemDTO.getProductId(), tempInvoiceId, itemDTO.getQuantity(), "Invoice: " + tempInvoiceId);
         }
 
-        // Save invoice first to get the invoice ID
+        // Set the temporary invoice ID and save invoice
+        invoice.setInvoiceId(tempInvoiceId);
         invoice.setItems(items);
         invoice.setTotalAmount(totalAmount);
-        invoice.setRemainingAmount(totalAmount);
-        InvoiceClass savedInvoice = invoiceClassRepo.save(invoice);
-        
-        // Deduct stock from inventory using new stock level service
-        for (InvoiceItemReqDTO itemDTO : dto.getItems()) {
-            stockLevelService.decreaseStock(dto.getTenantId(), itemDTO.getProductId(), itemDTO.getQuantity());
+        if(invoice.getStatus().equals(InvoiceClass.Status.PAID)) {
+            invoice.setRemainingAmount(BigDecimal.ZERO);
+        } else {
+            invoice.setRemainingAmount(totalAmount);
         }
-        
-        // Record stock movements for all items (OUT movements)
-        stockMovementService.recordStockMovementsForInvoice(dto.getTenantId(), savedInvoice.getInvoiceId(), dto.getItems());
+        InvoiceClass savedInvoice = invoiceClassRepo.save(invoice);
         
         return new ApiResponse<>("Invoice created successfully", 201, new InvoiceResDTO(savedInvoice));
     }
@@ -138,11 +139,18 @@ public class InvoiceService {
         return new ApiResponse<>("Invoices retrieved successfully", 200, allInvoicesDTO);
     }
 
+    public ApiResponse<?> returnInvoicesWithStatus(String tenantId, String status) {
+        List<InvoiceClass> allInvoicesWithStatus = invoiceClassRepo.findByTenantIdAndStatusString(tenantId, status);
+        List<InvoiceResDTO> allInvoicesDTO = allInvoicesWithStatus.stream()
+                .map(InvoiceResDTO::new)
+                .collect(Collectors.toList());
+        return new ApiResponse<>("Invoices with status " + status, 200, allInvoicesDTO);
+    }
+
     public ApiResponse<?> updateInvoiceStatus(String tenantId, long id, String status) {
         if (!invoiceClassRepo.existsByTenantIdAndInvoiceId(tenantId, id)) {
             return new ApiResponse<>("Invoice not found in this tenant", 404, null);
         }
-        
         Optional<InvoiceClass> tempInvoice = invoiceClassRepo.findById(id);
         if (tempInvoice.isPresent()) {
             InvoiceClass invoice = tempInvoice.get();
@@ -154,35 +162,14 @@ public class InvoiceService {
         return new ApiResponse<>("Invoice not found", 404, null);
     }
 
-    public ApiResponse<?> returnInvoicesWithStatus(String tenantId, String status) {
-        List<InvoiceClass> allInvoicesWithStatus = invoiceClassRepo.findByTenantIdAndStatusString(tenantId, status);
-        List<InvoiceResDTO> allInvoicesDTO = allInvoicesWithStatus.stream()
-                .map(InvoiceResDTO::new)
-                .collect(Collectors.toList());
-        return new ApiResponse<>("Invoices with status " + status, 200, allInvoicesDTO);
-    }
-
-    public ApiResponse<?> returnInvoiceStatus(long id) {
-        Optional<InvoiceClass> invoice = invoiceClassRepo.findById(id);
-        if (invoice.isPresent()) {
-            return new ApiResponse<>(
-                    "Invoice status fetched successfully",
-                    200,
-                    invoice.get().getStatus()
-            );
-        } else {
+    public ApiResponse<?> returnInvoiceWithID(String tenantID,String id) {
+        Optional<InvoiceClass> invoiceClass = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantID,id);
+        if(invoiceClass.isEmpty()){
             return new ApiResponse<>("Invoice not found", 404, null);
         }
+        else{
+            InvoiceClass invoice = invoiceClass.get();
+            return new ApiResponse<>("Invoice returned successfully", 201, invoice);
+        }
     }
-
-    public ApiResponse<?> createNewPayment(PaymentClassReqDTO paymentClassReqDTO) {
-        // This method is deprecated - use PaymentService.createPayment instead
-        return new ApiResponse<>("This method is deprecated. Please use PaymentService.createPayment", 400, null);
-    }
-
-    public ApiResponse<?> getAllPayments() {
-        // This method is deprecated - use PaymentService.getAllPaymentsByTenant instead
-        return new ApiResponse<>("This method is deprecated. Please use PaymentService.getAllPaymentsByTenant", 400, null);
-    }
-
 }

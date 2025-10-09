@@ -10,12 +10,9 @@ import lombok.Data;
 @Data
 public class PaymentReqDTO {
     
-    @NotNull(message = "Tenant ID is required")
-    @Size(min = 36, max = 36, message = "Tenant ID must be a valid UUID")
-    private String tenantId;
     
     @NotNull(message = "Invoice ID is required")
-    private Long invoiceId;
+    private String invoiceId;
     
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
@@ -30,8 +27,7 @@ public class PaymentReqDTO {
     public PaymentReqDTO() {
     }
     
-    public PaymentReqDTO(String tenantId, Long invoiceId, BigDecimal amount, String method, String transactionRef) {
-        this.tenantId = tenantId;
+    public PaymentReqDTO(String invoiceId, BigDecimal amount, String method, String transactionRef) {
         this.invoiceId = invoiceId;
         this.amount = amount;
         this.method = method;

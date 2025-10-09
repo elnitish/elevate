@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InvoiceClassRepo extends JpaRepository<InvoiceClass, Long> {
@@ -20,4 +21,6 @@ public interface InvoiceClassRepo extends JpaRepository<InvoiceClass, Long> {
     List<InvoiceClass> findByTenantIdAndStatusString(@Param("tenantId") String tenantId, @Param("status") String status);
     
     boolean existsByTenantIdAndInvoiceId(String tenantId, Long invoiceId);
+
+    Optional<InvoiceClass> findByTenantIdAndInvoiceId(String tenantId, String invoiceId);
 }

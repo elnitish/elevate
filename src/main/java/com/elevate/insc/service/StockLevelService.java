@@ -59,21 +59,16 @@ public class StockLevelService {
     @Transactional
     public boolean decreaseStock(String tenantId, String productId, Integer quantity) {
         Optional<StockLevelClass> stockLevelOpt = stockLevelRepository.findByTenantIdAndProductId(tenantId, productId);
-        
+
         if (stockLevelOpt.isPresent()) {
             StockLevelClass stockLevel = stockLevelOpt.get();
             int currentQuantity = stockLevel.getQuantity();
-            
-            if (currentQuantity >= quantity) {
-                stockLevel.setQuantity(currentQuantity - quantity);
-                stockLevelRepository.save(stockLevel);
-                return true; // Successfully decreased stock
-            } else {
-                return false; // Insufficient stock
-            }
-        } else {
-            return false; // No stock level found
+
+            stockLevel.setQuantity(currentQuantity - quantity);
+            stockLevelRepository.save(stockLevel);
+            return true; // Successfully decreased stock
         }
+        return false;
     }
     
     /**

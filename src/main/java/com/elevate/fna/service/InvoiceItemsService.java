@@ -41,9 +41,9 @@ public class InvoiceItemsService {
     }
     
     @Transactional
-    public ApiResponse<?> createInvoiceItem(InvoiceItemReqDTO invoiceItemReqDTO) {
+    public ApiResponse<?> createInvoiceItem(String tenantId, InvoiceItemReqDTO invoiceItemReqDTO) {
         // Validate tenant exists
-        if (!tenantRepository.existsById(invoiceItemReqDTO.getTenantId())) {
+        if (!tenantRepository.existsById(tenantId)) {
             return new ApiResponse<>("Tenant not found", 404, null);
         }
         
@@ -54,7 +54,7 @@ public class InvoiceItemsService {
         }
         
         InvoiceClass invoice = invoiceOpt.get();
-        if (!invoice.getTenantId().equals(invoiceItemReqDTO.getTenantId())) {
+        if (!invoice.getTenantId().equals(tenantId)) {
             return new ApiResponse<>("Invoice does not belong to this tenant", 403, null);
         }
         
@@ -65,7 +65,7 @@ public class InvoiceItemsService {
         }
         
         ProductClass product = productOpt.get();
-        if (!product.getTenantId().equals(invoiceItemReqDTO.getTenantId())) {
+        if (!product.getTenantId().equals(tenantId)) {
             return new ApiResponse<>("Product does not belong to this tenant", 403, null);
         }
         
@@ -75,7 +75,7 @@ public class InvoiceItemsService {
         // Create invoice item entity
         InvoiceItemsClass newInvoiceItem = new InvoiceItemsClass(
             invoiceItemId,
-            invoiceItemReqDTO.getTenantId(),
+            tenantId,
             invoice,
             product,
             invoiceItemReqDTO.getQuantity(),

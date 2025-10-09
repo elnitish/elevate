@@ -1,24 +1,24 @@
 package com.elevate.fna.dto;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import com.elevate.fna.entity.InvoiceClass;
-import com.elevate.fna.entity.InvoiceItemsClass;
+
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Data
 @Getter
 @Setter
 public class InvoiceResDTO {
 
-    private Long invoiceId;
+    private String invoiceId;
     private String tenantId;
     private String name;
     private String email;
@@ -52,7 +52,7 @@ public class InvoiceResDTO {
         this.updatedAt = invoice.getUpdatedAt();
     }
 
-    public InvoiceResDTO(Long id, String tenantId, String customerName, String email, String phone, BigDecimal amount, BigDecimal remainingAmount, String status, LocalDate date, List<InvoiceItemResDTO> invoiceItemResDTOS) {
+    public InvoiceResDTO(String id, String tenantId, String customerName, String email, String phone, BigDecimal amount, BigDecimal remainingAmount, String status, LocalDate date, List<InvoiceItemResDTO> invoiceItemResDTOS) {
         this.invoiceId = id;
         this.tenantId = tenantId;
         this.name = customerName;
