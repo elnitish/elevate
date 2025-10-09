@@ -38,7 +38,7 @@ public class StockMovementService {
             if (invoice.getTenantId() == null || invoice.getTenantId().trim().isEmpty()) {
                 throw new IllegalArgumentException("Invoice tenant ID cannot be null or empty");
             }
-            if (invoice.getInvoiceId() == null || invoice.getInvoiceId().trim().isEmpty()) {
+            if (invoice.getInvoiceId() == null) {
                 throw new IllegalArgumentException("Invoice ID cannot be null or empty");
             }
             if (invoice.getItems() == null || invoice.getItems().isEmpty()) {
@@ -64,7 +64,7 @@ public class StockMovementService {
                     invoice.getTenantId(),
                     item.getProduct().getId(),
                     null, // purchaseOrderId is null for invoices
-                    invoice.getInvoiceId(),
+                    String.valueOf(invoice.getInvoiceId()),
                     StockMovementClass.Type.OUT,
                     item.getQuantity(),
                     "Invoice: " + invoice.getInvoiceId()
@@ -239,13 +239,7 @@ public class StockMovementService {
      * Get stock movements for an invoice
      */
     public List<StockMovementClass> getStockMovementsByInvoice(String tenantId, String invoiceId) {
-        // Convert String invoiceId to Long for repository method
-        try {
-            Long invoiceIdLong = Long.parseLong(invoiceId);
-            return stockMovementRepository.findByTenantIdAndInvoiceId(tenantId, invoiceIdLong);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid invoice ID format: " + invoiceId, e);
-        }
+        return stockMovementRepository.findByTenantIdAndInvoiceId(tenantId, invoiceId);
     }
     
     /**

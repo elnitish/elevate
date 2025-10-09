@@ -61,6 +61,17 @@ public class TenantService {
     }
 
     public ApiResponse<?> createTenant(TenantReqDTO tenantReqDTO) {
+        // Check for duplicate tenant name
+        if (tenantRepository.existsByName(tenantReqDTO.getName())) {
+            return new ApiResponse<>("Tenant name already exists", 409, null);
+        }
+        
+        // Check for duplicate email
+        if (tenantReqDTO.getEmail() != null && !tenantReqDTO.getEmail().isEmpty() 
+            && tenantRepository.existsByEmail(tenantReqDTO.getEmail())) {
+            return new ApiResponse<>("Email already exists", 409, null);
+        }
+        
         // Generate UUID for tenant
         String tenantId = java.util.UUID.randomUUID().toString();
         

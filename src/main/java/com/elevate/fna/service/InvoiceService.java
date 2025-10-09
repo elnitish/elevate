@@ -8,17 +8,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.elevate.crm.service.CustomerLedgerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.fna.dto.InvoiceItemReqDTO;
+import com.elevate.crm.entity.CustomerClass;
+import com.elevate.crm.repository.CustomerRepository;
 import com.elevate.fna.dto.InvoiceReqDTO;
 import com.elevate.fna.dto.InvoiceResDTO;
 import com.elevate.fna.entity.InvoiceClass;
 import com.elevate.fna.entity.InvoiceItemsClass;
 import com.elevate.fna.repository.InvoiceClassRepo;
-import com.elevate.fna.repository.PaymentClassRepo;
 import com.elevate.insc.entity.ProductClass;
 import com.elevate.insc.entity.StockLevelClass;
 import com.elevate.insc.service.ProductService;
@@ -29,23 +31,26 @@ import com.elevate.insc.service.StockMovementService;
 public class InvoiceService {
 
     private final InvoiceClassRepo invoiceClassRepo;
-    private PaymentClassRepo paymentClassRepo;
-    private ProductService productService;
-    private StockMovementService stockMovementService;
-    private StockLevelService stockLevelService;
+    private final ProductService productService;
+    private final StockMovementService stockMovementService;
+    private final StockLevelService stockLevelService;
+    private final CustomerRepository customerRepository;
+    private final CustomerLedgerService customerLedgerService;
 
     @Autowired
     public InvoiceService(InvoiceClassRepo invoiceClassRepo,
-                          PaymentClassRepo paymentClassRepo,
                           ProductService productService,
                           StockMovementService stockMovementService,
-                          StockLevelService stockLevelService) {
+                          StockLevelService stockLevelService,
+                          CustomerLedgerService customerLedgerService,
+                          CustomerRepository customerRepository) {
 
         this.invoiceClassRepo = invoiceClassRepo;
-        this.paymentClassRepo = paymentClassRepo;
         this.productService = productService;
         this.stockMovementService = stockMovementService;
         this.stockLevelService = stockLevelService;
+        this.customerLedgerService = customerLedgerService;
+        this.customerRepository = customerRepository;
     }
 
     public ApiResponse<?> createNewInvoice(String tenantId, InvoiceReqDTO dto) {
@@ -56,6 +61,12 @@ public class InvoiceService {
 
         InvoiceClass invoice = new InvoiceClass();
         invoice.setTenantId(tenantId);
+        // Resolve and set Customer entity
+        java.util.Optional<CustomerClass> customerOpt = customerRepository.findByTenantIdAndId(tenantId, dto.getCustomerId());
+        if (customerOpt.isEmpty()) {
+            return new ApiResponse<>("Customer not found", 404, null);
+        }
+        invoice.setCustomer(customerOpt.get());
         invoice.setName(dto.getName());
         invoice.setEmail(dto.getEmail());
         invoice.setPhone(dto.getPhone());
@@ -69,14 +80,15 @@ public class InvoiceService {
 
         List<InvoiceItemsClass> items = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
-        
-        // Generate a temporary invoice ID for stock movements
-        String tempInvoiceId = java.util.UUID.randomUUID().toString();
 
         for (InvoiceItemReqDTO itemDTO : dto.getItems()) {
             // Validate product exists and belongs to tenant
             Optional<ProductClass> productOpt = productService.getProductById(itemDTO.getProductId());
+            if (productOpt.isEmpty()) {
+                return new ApiResponse<>("Product not found: " + itemDTO.getProductId(), 404, null);
+            }
             ProductClass product = productOpt.get();
+            
             // Validate quantity
             if (itemDTO.getQuantity() == null || itemDTO.getQuantity() <= 0) {
                 return new ApiResponse<>("Invalid quantity for product: " + itemDTO.getProductId(), 400, null);
@@ -114,11 +126,10 @@ public class InvoiceService {
             
             // Deduct stock and record stock movement for this item
             stockLevelService.decreaseStock(tenantId, itemDTO.getProductId(), itemDTO.getQuantity());
-            stockMovementService.recordStockMovementForInvoice(tenantId, itemDTO.getProductId(), tempInvoiceId, itemDTO.getQuantity(), "Invoice: " + tempInvoiceId);
+            // defer stock movement and ledger until invoice has a persisted id
         }
 
         // Set the temporary invoice ID and save invoice
-        invoice.setInvoiceId(tempInvoiceId);
         invoice.setItems(items);
         invoice.setTotalAmount(totalAmount);
         if(invoice.getStatus().equals(InvoiceClass.Status.PAID)) {
@@ -127,6 +138,11 @@ public class InvoiceService {
             invoice.setRemainingAmount(totalAmount);
         }
         InvoiceClass savedInvoice = invoiceClassRepo.save(invoice);
+        // Now we have a numeric invoiceId; record stock movements and ledger
+        for (var item : savedInvoice.getItems()) {
+            stockMovementService.recordStockMovementForInvoice(tenantId, item.getProduct().getId(), String.valueOf(savedInvoice.getInvoiceId()), item.getQuantity(), "Invoice: " + savedInvoice.getInvoiceId());
+        }
+        customerLedgerService.addEntryForInvoice(savedInvoice);
         
         return new ApiResponse<>("Invoice created successfully", 201, new InvoiceResDTO(savedInvoice));
     }
@@ -162,8 +178,8 @@ public class InvoiceService {
         return new ApiResponse<>("Invoice not found", 404, null);
     }
 
-    public ApiResponse<?> returnInvoiceWithID(String tenantID,String id) {
-        Optional<InvoiceClass> invoiceClass = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantID,id);
+    public ApiResponse<?> returnInvoiceWithID(String tenantID, Long id) {
+        Optional<InvoiceClass> invoiceClass = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantID, id);
         if(invoiceClass.isEmpty()){
             return new ApiResponse<>("Invoice not found", 404, null);
         }

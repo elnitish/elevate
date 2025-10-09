@@ -11,8 +11,7 @@ import lombok.Data;
 @Data
 public class InvoiceItemReqDTO {
     
-    
-    @NotNull(message = "Invoice ID is required")
+    // Note: invoiceId is optional - it's automatically set during invoice creation
     private Long invoiceId;
     
     @NotNull(message = "Product ID is required")
@@ -23,7 +22,7 @@ public class InvoiceItemReqDTO {
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
     
-    @NotNull(message = "Unit price is required")
+    // Note: unitPrice is optional - it's automatically fetched from product if not provided
     @DecimalMin(value = "0.01", message = "Unit price must be greater than 0")
     private BigDecimal unitPrice;
     

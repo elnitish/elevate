@@ -22,5 +22,5 @@ public interface InvoiceClassRepo extends JpaRepository<InvoiceClass, Long> {
     
     boolean existsByTenantIdAndInvoiceId(String tenantId, Long invoiceId);
 
-    Optional<InvoiceClass> findByTenantIdAndInvoiceId(String tenantId, String invoiceId);
+    Optional<InvoiceClass> findByTenantIdAndInvoiceId(String tenantId, Long invoiceId);
 }

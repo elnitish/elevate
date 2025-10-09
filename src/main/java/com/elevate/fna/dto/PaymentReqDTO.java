@@ -12,8 +12,11 @@ public class PaymentReqDTO {
     
     
     @NotNull(message = "Invoice ID is required")
-    private String invoiceId;
+    private Long invoiceId;
     
+    @NotNull(message = "Customer ID is required")
+    private Long customerId;
+
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
     private BigDecimal amount;
@@ -27,7 +30,7 @@ public class PaymentReqDTO {
     public PaymentReqDTO() {
     }
     
-    public PaymentReqDTO(String invoiceId, BigDecimal amount, String method, String transactionRef) {
+    public PaymentReqDTO(Long invoiceId, BigDecimal amount, String method, String transactionRef) {
         this.invoiceId = invoiceId;
         this.amount = amount;
         this.method = method;

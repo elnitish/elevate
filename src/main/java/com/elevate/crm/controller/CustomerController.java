@@ -47,13 +47,13 @@ public class CustomerController {
         return new ResponseEntity<>(res, HttpStatusCode.valueOf(res.getCode()));
     }
 
-    @PutMapping("/updateCustomer/{id}")
+    @PutMapping("/updateCustomer/{id}") //working
     public ResponseEntity<ApiResponse<?>> updateCustomerById(HttpServletRequest request, @PathVariable Long id, @RequestBody CustomerReqDTO dto) {
         ApiResponse<?> res = customerService.updateCustomer((String) request.getAttribute("tenantID"), id, dto);
         return new ResponseEntity<>(res, HttpStatusCode.valueOf(res.getCode()));
     }
 
-    @DeleteMapping("/deleteCustomer/{id}")
+    @DeleteMapping("/deleteCustomer/{id}") //working
     public ResponseEntity<ApiResponse<?>> deleteCustomerById(HttpServletRequest request, @PathVariable Long id) {
         ApiResponse<?> res = customerService.deleteCustomer((String) request.getAttribute("tenantID"), id);
         return new ResponseEntity<>(res, HttpStatusCode.valueOf(res.getCode()));

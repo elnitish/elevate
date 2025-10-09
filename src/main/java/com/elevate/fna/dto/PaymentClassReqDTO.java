@@ -20,15 +20,6 @@ public class PaymentClassReqDTO {
         this.method = method;
     }
 
-    // Constructor to map from entity
-    public PaymentClassReqDTO(PaymentClass paymentClass) {
-        if (paymentClass != null) {
-            this.invoiceID = paymentClass.getInvoiceId();
-            this.totalAmount = paymentClass.getAmount();
-            this.method = String.valueOf(paymentClass.getMethod());
-        }
-    }
-
     // Getters and Setters
     public String getInvoiceID() {
         return invoiceID;

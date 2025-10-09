@@ -1,42 +1,43 @@
 package com.elevate.crm.service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.elevate.crm.entity.CustomerLedgerClass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.crm.dto.CustomerBalanceResDTO;
-import com.elevate.crm.dto.CustomerBalanceUpdateReqDTO;
 import com.elevate.crm.entity.CustomerBalanceClass;
-import com.elevate.crm.entity.CustomerBalanceId;
-import com.elevate.crm.entity.CustomerClass;
 import com.elevate.crm.repository.CustomerBalanceRepository;
-import com.elevate.crm.repository.CustomerRepository;
 
 @Service
 public class CustomerBalanceService {
 
     private final CustomerBalanceRepository balanceRepository;
-    private final CustomerRepository customerRepository;
 
     @Autowired
-    public CustomerBalanceService(CustomerBalanceRepository balanceRepository, CustomerRepository customerRepository) {
+    public CustomerBalanceService(CustomerBalanceRepository balanceRepository) {
         this.balanceRepository = balanceRepository;
-        this.customerRepository = customerRepository;
     }
 
-    public ApiResponse<?> getAllBalances(String tenantId) {
-        List<CustomerBalanceResDTO> list = balanceRepository.findByIdTenantId(tenantId)
-                .stream().map(CustomerBalanceResDTO::new).collect(Collectors.toList());
-        return new ApiResponse<>("Customer balances retrieved", 200, list);
+    public ApiResponse<?> getBalancesOfAllCustomers(String tenantId, Integer page, Integer size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page == null ? 0 : page, size == null ? 20 : size);
+        org.springframework.data.domain.Page<com.elevate.crm.entity.CustomerBalanceClass> balances = balanceRepository.findByIdTenantId(tenantId, pageable);
+        List<CustomerBalanceResDTO> list = balances.getContent().stream().map(CustomerBalanceResDTO::new).collect(Collectors.toList());
+        java.util.Map<String,Object> payload = new java.util.HashMap<>();
+        payload.put("content", list);
+        payload.put("page", balances.getNumber());
+        payload.put("size", balances.getSize());
+        payload.put("totalElements", balances.getTotalElements());
+        payload.put("totalPages", balances.getTotalPages());
+        return new ApiResponse<>("Customer balances retrieved", 200, payload);
     }
 
-    public ApiResponse<?> getBalance(String tenantId, Long customerId) {
+    public ApiResponse<?> getBalanceOfCustomer(String tenantId, Long customerId) {
         Optional<CustomerBalanceClass> opt = balanceRepository.findByIdTenantIdAndIdCustomerId(tenantId, customerId);
         if (opt.isEmpty()) {
             return new ApiResponse<>("Customer balance not found", 404, null);
@@ -45,31 +46,37 @@ public class CustomerBalanceService {
     }
 
     @Transactional
-    public ApiResponse<?> upsertBalance(String tenantId, CustomerBalanceUpdateReqDTO dto) {
-        Optional<CustomerClass> customerOpt = customerRepository.findByTenantIdAndId(tenantId, dto.getCustomerId());
-        if (customerOpt.isEmpty()) {
-            return new ApiResponse<>("Customer not found", 404, null);
+    public ApiResponse<?> upsertBalanceForInvoice(CustomerLedgerClass entry) {
+        Long customerId = entry.getCustomer().getId();
+        Optional<CustomerBalanceClass> entity  = balanceRepository.findByIdTenantIdAndIdCustomerId(entry.getTenantId(), customerId);
+
+        CustomerBalanceClass balance = entity.orElseGet(() -> new CustomerBalanceClass(entry.getCustomer()));
+
+        if (entry.getEntryType().equals(CustomerLedgerClass.EntryType.DEBIT)) {
+            balance.setTotalDebit(balance.getTotalDebit().add(entry.getAmount()));
+        } else {
+            balance.setTotalCredit(balance.getTotalCredit().add(entry.getAmount()));
         }
 
-        CustomerBalanceId id = new CustomerBalanceId(tenantId, dto.getCustomerId());
-        CustomerBalanceClass entity = balanceRepository.findById(id).orElseGet(() -> {
-            CustomerBalanceClass cb = new CustomerBalanceClass();
-            cb.setId(id);
-            cb.setCustomer(customerOpt.get());
-            cb.setTotalDebit(BigDecimal.ZERO);
-            cb.setTotalCredit(BigDecimal.ZERO);
-            return cb;
-        });
+        CustomerBalanceClass saved = balanceRepository.save(balance);
+        return new ApiResponse<>("Customer balance saved", 201, new CustomerBalanceResDTO(saved));
+    }
 
-        if (dto.getTotalDebit() != null) {
-            entity.setTotalDebit(dto.getTotalDebit());
-        }
-        if (dto.getTotalCredit() != null) {
-            entity.setTotalCredit(dto.getTotalCredit());
+    @Transactional
+    public ApiResponse<?> upsertBalanceForPayment(CustomerLedgerClass entry) {
+        Long customerId = entry.getCustomer().getId();
+        Optional<CustomerBalanceClass> entity  = balanceRepository.findByIdTenantIdAndIdCustomerId(entry.getTenantId(), customerId);
+
+        CustomerBalanceClass balance = entity.orElseGet(() -> new CustomerBalanceClass(entry.getCustomer()));
+
+        if (entry.getEntryType().equals(CustomerLedgerClass.EntryType.DEBIT)) {
+            balance.setTotalDebit(balance.getTotalDebit().add(entry.getAmount()));
+        } else {
+            balance.setTotalCredit(balance.getTotalCredit().add(entry.getAmount()));
         }
 
-        CustomerBalanceClass saved = balanceRepository.save(entity);
-        return new ApiResponse<>("Customer balance saved", 200, new CustomerBalanceResDTO(saved));
+        CustomerBalanceClass saved = balanceRepository.save(balance);
+        return new ApiResponse<>("Customer balance saved", 201, new CustomerBalanceResDTO(saved));
     }
 }
 

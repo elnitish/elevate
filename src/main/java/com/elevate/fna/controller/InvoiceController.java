@@ -1,10 +1,6 @@
 package com.elevate.fna.controller;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.service.SessionService;
-import com.elevate.fna.dto.PaymentClassReqDTO;
-import com.elevate.fna.entity.CustomerClass;
-import com.elevate.fna.service.CustomerService;
 import com.elevate.fna.service.InvoiceService;
 import com.elevate.fna.dto.InvoiceReqDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,9 +44,9 @@ public class InvoiceController {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
-    @GetMapping("/getInvoiceById") //woking // "http://localhost:8080/getAllInvoices" //"http://localhost:8080/getAllInvoices?status=PAID"
-    public ResponseEntity<?> getInvoiceById(HttpServletRequest request, @RequestParam String id) {
-        ApiResponse<?> response = invoiceService.returnInvoiceWithID((String) request.getAttribute("tenantID"),id);
+    @GetMapping("/getInvoiceById")
+    public ResponseEntity<?> getInvoiceById(HttpServletRequest request, @RequestParam Long id) {
+        ApiResponse<?> response = invoiceService.returnInvoiceWithID((String) request.getAttribute("tenantID"), id);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 

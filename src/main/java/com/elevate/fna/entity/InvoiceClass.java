@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.elevate.crm.entity.CustomerClass;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -33,10 +34,14 @@ public class InvoiceClass {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "invoice_id")
-    private String invoiceId;
+    private Long invoiceId;
 
     @Column(name = "tenant_id", nullable = false, length = 36)
     private String tenantId;
+
+    @jakarta.persistence.ManyToOne
+    @jakarta.persistence.JoinColumn(name = "customer_id", nullable = false)
+    private CustomerClass customer;
 
     @Column(name = "name", nullable = false, length = 255)
     private String name;
@@ -87,5 +92,53 @@ public class InvoiceClass {
 
     public enum Status {
         PENDING, PAID, CANCELLED
+    }
+
+    public Long getInvoiceId() {
+        return invoiceId;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public CustomerClass getCustomer() {
+        return customer;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public BigDecimal getRemainingAmount() {
+        return remainingAmount;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

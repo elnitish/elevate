@@ -2,6 +2,8 @@ package com.elevate.crm.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +14,11 @@ public interface CustomerLedgerRepository extends JpaRepository<CustomerLedgerCl
 
     List<CustomerLedgerClass> findByTenantId(String tenantId);
 
-    List<CustomerLedgerClass> findByTenantIdAndCustomerId(String tenantId, Long customerId);
+    List<CustomerLedgerClass> findByTenantIdAndCustomer_Id(String tenantId, Long customerId);
+
+    Page<CustomerLedgerClass> findByTenantId(String tenantId, Pageable pageable);
+
+    Page<CustomerLedgerClass> findByTenantIdAndCustomer_Id(String tenantId, Long customerId, Pageable pageable);
 }
 
 

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.service.SessionService;
 import com.elevate.fna.dto.PaymentReqDTO;
 import com.elevate.fna.service.PaymentService;
 
@@ -24,12 +23,10 @@ import com.elevate.fna.service.PaymentService;
 public class PaymentController {
     
     private final PaymentService paymentService;
-    private final SessionService sessionService;
     
     @Autowired
-    public PaymentController(PaymentService paymentService, SessionService sessionService) {
+    public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
-        this.sessionService = sessionService;
     }
     
     @PostMapping("/createPayment") //working

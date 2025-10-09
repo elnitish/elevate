@@ -22,7 +22,7 @@ public interface StockMovementRepository extends JpaRepository<StockMovementClas
     List<StockMovementClass> findByTenantIdAndPurchaseOrderId(String tenantId, String purchaseOrderId);
     
     // Find movements by invoice
-    List<StockMovementClass> findByTenantIdAndInvoiceId(String tenantId, Long invoiceId);
+    List<StockMovementClass> findByTenantIdAndInvoiceId(String tenantId, String invoiceId);
     
     // Find movements by type (IN/OUT)
     List<StockMovementClass> findByTenantIdAndType(String tenantId, StockMovementClass.Type type);

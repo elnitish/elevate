@@ -3,69 +3,105 @@ package com.elevate.crm.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.elevate.fna.entity.InvoiceClass;
+import com.elevate.fna.entity.PaymentClass;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.elevate.auth.dto.ApiResponse;
-import com.elevate.auth.repository.TenantRepository;
-import com.elevate.crm.dto.CustomerLedgerReqDTO;
 import com.elevate.crm.dto.CustomerLedgerResDTO;
-import com.elevate.crm.entity.CustomerClass;
 import com.elevate.crm.entity.CustomerLedgerClass;
 import com.elevate.crm.repository.CustomerLedgerRepository;
-import com.elevate.crm.repository.CustomerRepository;
 
 @Service
 public class CustomerLedgerService {
 
     private final CustomerLedgerRepository ledgerRepository;
-    private final CustomerRepository customerRepository;
-    private final TenantRepository tenantRepository;
-
+    private final CustomerBalanceService  customerBalanceService;
     @Autowired
     public CustomerLedgerService(CustomerLedgerRepository ledgerRepository,
-                                 CustomerRepository customerRepository,
-                                 TenantRepository tenantRepository) {
+                                 CustomerBalanceService  customerBalanceService) {
         this.ledgerRepository = ledgerRepository;
-        this.customerRepository = customerRepository;
-        this.tenantRepository = tenantRepository;
+        this.customerBalanceService = customerBalanceService;
     }
 
     @Transactional
-    public ApiResponse<?> addEntry(String tenantId, CustomerLedgerReqDTO dto) {
-        if (!tenantRepository.existsById(tenantId)) {
-            return new ApiResponse<>("Tenant not found", 404, null);
-        }
-        CustomerClass customer = customerRepository.findByTenantIdAndId(tenantId, dto.getCustomerId())
-                .orElse(null);
-        if (customer == null) {
-            return new ApiResponse<>("Customer not found", 404, null);
-        }
-
+    public ApiResponse<?> addEntryForInvoice(InvoiceClass invoice) {
         CustomerLedgerClass entry = new CustomerLedgerClass();
-        entry.setTenantId(tenantId);
-        entry.setCustomer(customer);
-        entry.setReferenceType(CustomerLedgerClass.ReferenceType.valueOf(dto.getReferenceType().toUpperCase()));
-        entry.setReferenceId(dto.getReferenceId());
-        entry.setEntryType(CustomerLedgerClass.EntryType.valueOf(dto.getEntryType().toUpperCase()));
-        entry.setAmount(dto.getAmount());
-        entry.setDescription(dto.getDescription());
-
+        entry.setTenantId(invoice.getTenantId());
+        entry.setCustomer(invoice.getCustomer());
+        entry.setReferenceType(CustomerLedgerClass.ReferenceType.INVOICE);
+        entry.setReferenceId(invoice.getInvoiceId());
+        entry.setEntryType(CustomerLedgerClass.EntryType.DEBIT);
+        entry.setAmount(invoice.getTotalAmount());
+        entry.setDescription("Invoice created");
+        customerBalanceService.upsertBalanceForInvoice(entry);
         CustomerLedgerClass saved = ledgerRepository.save(entry);
+
         return new ApiResponse<>("Ledger entry added", 201, new CustomerLedgerResDTO(saved));
     }
 
-    public ApiResponse<?> getEntriesByTenant(String tenantId) {
-        List<CustomerLedgerResDTO> list = ledgerRepository.findByTenantId(tenantId)
-                .stream().map(CustomerLedgerResDTO::new).collect(Collectors.toList());
-        return new ApiResponse<>("Ledger entries retrieved", 200, list);
+    @Transactional
+    public ApiResponse<?> addEntryForPayment(PaymentClass payment) {
+        CustomerLedgerClass entry = new CustomerLedgerClass();
+        entry.setTenantId(payment.getTenantId());
+        entry.setCustomer(payment.getCustomer());
+        entry.setReferenceType(CustomerLedgerClass.ReferenceType.INVOICE);
+        entry.setReferenceId(payment.getInvoiceId());
+        entry.setEntryType(CustomerLedgerClass.EntryType.CREDIT);
+        entry.setAmount(payment.getAmount());
+        entry.setDescription("Payment received");
+        customerBalanceService.upsertBalanceForPayment(entry);
+        CustomerLedgerClass saved = ledgerRepository.save(entry);
+
+        return new ApiResponse<>("Ledger entry added", 201, new CustomerLedgerResDTO(saved));
     }
 
-    public ApiResponse<?> getEntriesByCustomer(String tenantId, Long customerId) {
-        List<CustomerLedgerResDTO> list = ledgerRepository.findByTenantIdAndCustomerId(tenantId, customerId)
-                .stream().map(CustomerLedgerResDTO::new).collect(Collectors.toList());
-        return new ApiResponse<>("Customer ledger entries retrieved", 200, list);
+    @Transactional
+    public ApiResponse<?> addEntryForPaymentReversal(PaymentClass payment) {
+        // Create a debit entry to reverse the credit from the original payment
+        CustomerLedgerClass entry = new CustomerLedgerClass();
+        entry.setTenantId(payment.getTenantId());
+        entry.setCustomer(payment.getCustomer());
+        entry.setReferenceType(CustomerLedgerClass.ReferenceType.PAYMENT);
+        entry.setReferenceId(payment.getInvoiceId());
+        entry.setEntryType(CustomerLedgerClass.EntryType.DEBIT);
+        entry.setAmount(payment.getAmount());
+        entry.setDescription("Payment deleted/reversed");
+        customerBalanceService.upsertBalanceForInvoice(entry);
+        CustomerLedgerClass saved = ledgerRepository.save(entry);
+
+        return new ApiResponse<>("Payment reversal ledger entry added", 201, new CustomerLedgerResDTO(saved));
+    }
+
+    public ApiResponse<?> getAllEntries(String tenantId, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page == null ? 0 : page, size == null ? 20 : size);
+        Page<CustomerLedgerClass> entries = ledgerRepository.findByTenantId(tenantId, pageable);
+        List<CustomerLedgerResDTO> list = entries.getContent().stream().map(CustomerLedgerResDTO::new).collect(Collectors.toList());
+        java.util.Map<String,Object> payload = new java.util.HashMap<>();
+        payload.put("content", list);
+        payload.put("page", entries.getNumber());
+        payload.put("size", entries.getSize());
+        payload.put("totalElements", entries.getTotalElements());
+        payload.put("totalPages", entries.getTotalPages());
+        return new ApiResponse<>("Ledger entries retrieved", 200, payload);
+    }
+
+    public ApiResponse<?> getEntriesByCustomer(String tenantId, Long customerId, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page == null ? 0 : page, size == null ? 20 : size);
+        Page<CustomerLedgerClass> entries = ledgerRepository.findByTenantIdAndCustomer_Id(tenantId, customerId, pageable);
+        List<CustomerLedgerResDTO> list = entries.getContent().stream().map(CustomerLedgerResDTO::new).collect(Collectors.toList());
+        java.util.Map<String,Object> payload = new java.util.HashMap<>();
+        payload.put("content", list);
+        payload.put("page", entries.getNumber());
+        payload.put("size", entries.getSize());
+        payload.put("totalElements", entries.getTotalElements());
+        payload.put("totalPages", entries.getTotalPages());
+        return new ApiResponse<>("Customer ledger entries retrieved", 200, payload);
     }
 }
 

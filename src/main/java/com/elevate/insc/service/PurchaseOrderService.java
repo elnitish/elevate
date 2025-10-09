@@ -81,7 +81,12 @@ public class PurchaseOrderService {
         
         // Create and add items
         for (var itemDTO : purchaseOrderReqDTO.getItems()) {
-            ProductClass product = productClassRepo.findById(itemDTO.getProductId()).get();
+            // Validate product exists
+            Optional<ProductClass> productOpt = productClassRepo.findById(itemDTO.getProductId());
+            if (productOpt.isEmpty()) {
+                return new ApiResponse<>("Product not found: " + itemDTO.getProductId(), 404, null);
+            }
+            ProductClass product = productOpt.get();
             
             String itemId = UUID.randomUUID().toString();
             PurchaseOrderItemClass item = new PurchaseOrderItemClass(
@@ -103,11 +108,7 @@ public class PurchaseOrderService {
         PurchaseOrderClass savedPurchaseOrder = purchaseOrderRepository.save(newPurchaseOrder);
         
         // Record stock movements for all items (IN movements)
-        stockMovementService.recordStockMovementsForPurchaseOrder(
-            tenantID, // Use session tenantID
-            purchaseOrderId, 
-            purchaseOrderReqDTO.getItems()
-        );
+        stockMovementService.recordStockMovementsForPurchaseOrder(savedPurchaseOrder);
         
         // Increase stock levels for all items
         for (var itemDTO : purchaseOrderReqDTO.getItems()) {
@@ -180,9 +181,6 @@ public class PurchaseOrderService {
     }
     
     public ApiResponse<?> returnPurchaseOrdersByStatus(String tenantId, String status) {
-        if(!status.equals("PENDING")||!status.equals("RECEIVED")||!status.equals("CANCELLED")) {
-            return new ApiResponse<>("Invalid status.", 400, null);
-        }
         try {
             PurchaseOrderClass.Status orderStatus = PurchaseOrderClass.Status.valueOf(status.toUpperCase());
             List<PurchaseOrderClass> purchaseOrders = purchaseOrderRepository.findByTenantIdAndStatus(tenantId, orderStatus);

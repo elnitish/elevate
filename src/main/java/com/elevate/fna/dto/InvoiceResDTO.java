@@ -18,8 +18,9 @@ import lombok.Setter;
 @Setter
 public class InvoiceResDTO {
 
-    private String invoiceId;
+    private Long invoiceId;
     private String tenantId;
+    private Long customerId;
     private String name;
     private String email;
     private String phone;
@@ -41,6 +42,7 @@ public class InvoiceResDTO {
     public InvoiceResDTO(InvoiceClass invoice) {
         this.invoiceId = invoice.getInvoiceId();
         this.tenantId = invoice.getTenantId();
+        this.customerId = invoice.getCustomer() != null ? invoice.getCustomer().getId() : null;
         this.name = invoice.getName();
         this.email = invoice.getEmail();
         this.phone = invoice.getPhone();
@@ -52,7 +54,7 @@ public class InvoiceResDTO {
         this.updatedAt = invoice.getUpdatedAt();
     }
 
-    public InvoiceResDTO(String id, String tenantId, String customerName, String email, String phone, BigDecimal amount, BigDecimal remainingAmount, String status, LocalDate date, List<InvoiceItemResDTO> invoiceItemResDTOS) {
+    public InvoiceResDTO(Long id, String tenantId, String customerName, String email, String phone, BigDecimal amount, BigDecimal remainingAmount, String status, LocalDate date, List<InvoiceItemResDTO> invoiceItemResDTOS) {
         this.invoiceId = id;
         this.tenantId = tenantId;
         this.name = customerName;

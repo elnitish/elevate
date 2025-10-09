@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.elevate.crm.service.CustomerBalanceService;
+import com.elevate.crm.service.CustomerLedgerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import com.elevate.fna.entity.InvoiceClass;
 import com.elevate.fna.entity.PaymentClass;
 import com.elevate.fna.repository.InvoiceClassRepo;
 import com.elevate.fna.repository.PaymentClassRepo;
+import com.elevate.crm.entity.CustomerClass;
+import com.elevate.crm.repository.CustomerRepository;
 
 @Service
 public class PaymentService {
@@ -25,47 +29,56 @@ public class PaymentService {
     private final PaymentClassRepo paymentClassRepo;
     private final InvoiceClassRepo invoiceClassRepo;
     private final TenantRepository tenantRepository;
+    private final CustomerRepository customerRepository;
+    private final CustomerLedgerService  customerLedgerService;
     
     @Autowired
     public PaymentService(PaymentClassRepo paymentClassRepo, 
                          InvoiceClassRepo invoiceClassRepo,
-                         TenantRepository tenantRepository) {
+                         TenantRepository tenantRepository,
+                         CustomerRepository customerRepository,
+                          CustomerLedgerService customerLedgerService) {
         this.paymentClassRepo = paymentClassRepo;
         this.invoiceClassRepo = invoiceClassRepo;
         this.tenantRepository = tenantRepository;
+        this.customerRepository = customerRepository;
+        this.customerLedgerService = customerLedgerService;
     }
     
     @Transactional
     public ApiResponse<?> createPayment(String tenantId, PaymentReqDTO paymentReqDTO) {
         // Validate invoice exists and belongs to tenant
-        Optional<InvoiceClass> invoiceOpt = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId,paymentReqDTO.getInvoiceId());
+        Optional<InvoiceClass> invoiceOpt = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId, paymentReqDTO.getInvoiceId());
         if (invoiceOpt.isEmpty()) {
             return new ApiResponse<>("Invoice not found", 404, null);
         }
         
         InvoiceClass invoice = invoiceOpt.get();
-        // Validate payment method
+
+        java.util.Optional<CustomerClass> customerOpt = customerRepository.findByTenantIdAndId(tenantId, paymentReqDTO.getCustomerId());
+        if (customerOpt.isEmpty() || invoice.getCustomer() == null || !invoice.getCustomer().getId().equals(customerOpt.get().getId())) {
+            return new ApiResponse<>("Customer does not match the invoice", 400, null);
+        }
         try {
             PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase());
         } catch (IllegalArgumentException e) {
             return new ApiResponse<>("Invalid payment method. Must be CASH, CARD, BANK_TRANSFER, or UPI", 400, null);
         }
-        // Generate UUID for payment
         String paymentId = UUID.randomUUID().toString();
         
-        // Create payment entity
         PaymentClass newPayment = new PaymentClass(
             paymentId,
             tenantId,
             paymentReqDTO.getInvoiceId(),
+            invoice.getCustomer(),
             paymentReqDTO.getAmount(),
             PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase()),
             paymentReqDTO.getTransactionRef()
         );
         invoice.setRemainingAmount(invoice.getRemainingAmount().subtract(newPayment.getAmount()));
         PaymentClass savedPayment = paymentClassRepo.save(newPayment);
+        customerLedgerService.addEntryForPayment(newPayment);
         PaymentResDTO responseDTO = new PaymentResDTO(savedPayment);
-        
         return new ApiResponse<>("Payment created successfully", 201, responseDTO);
     }
     
@@ -104,12 +117,19 @@ public class PaymentService {
             return new ApiResponse<>("Payment not found", 404, null);
         }
         PaymentClass paymentClass = paymentOpt.get();
-        Optional<InvoiceClass> invoice = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId,paymentClass.getInvoiceId());
-        if (invoice.isPresent()){
+        
+        // Update invoice remaining amount
+        Optional<InvoiceClass> invoice = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId, paymentClass.getInvoiceId());
+        if (invoice.isPresent()) {
             InvoiceClass invoiceClass = invoice.get();
             invoiceClass.setRemainingAmount(invoiceClass.getRemainingAmount().add(paymentClass.getAmount()));
             invoiceClassRepo.save(invoiceClass);
         }
+        
+        // Reverse customer ledger entry (add a debit entry to reverse the credit)
+        customerLedgerService.addEntryForPaymentReversal(paymentClass);
+        
+        // Delete the payment
         paymentClassRepo.deleteById(paymentId);
 
         return new ApiResponse<>("Payment deleted successfully", 200, null);
@@ -122,15 +142,12 @@ public class PaymentService {
         }
         
         // Get invoice
-        Optional<InvoiceClass> invoiceOpt = invoiceClassRepo.findById(invoiceId);
+        Optional<InvoiceClass> invoiceOpt = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId, invoiceId);
         if (invoiceOpt.isEmpty()) {
             return new ApiResponse<>("Invoice not found", 404, null);
         }
         
         InvoiceClass invoice = invoiceOpt.get();
-        if (!invoice.getTenantId().equals(tenantId)) {
-            return new ApiResponse<>("Invoice does not belong to this tenant", 403, null);
-        }
         
         // Get total payments
         BigDecimal totalPaid = paymentClassRepo.getTotalPaymentsByTenantAndInvoice(tenantId, invoiceId);
@@ -141,7 +158,7 @@ public class PaymentService {
         BigDecimal remainingAmount = invoice.getTotalAmount().subtract(totalPaid);
         
         java.util.Map<String, Object> summary = new java.util.HashMap<>();
-        summary.put("invoiceId", invoiceId);
+        summary.put("invoiceId", invoice.getInvoiceId());
         summary.put("totalAmount", invoice.getTotalAmount());
         summary.put("totalPaid", totalPaid);
         summary.put("remainingAmount", remainingAmount);

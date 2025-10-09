@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.elevate.crm.entity.CustomerClass;
 
 @Entity
 @Data
@@ -33,7 +34,11 @@ public class PaymentClass {
     private String tenantId;
 
     @Column(name = "invoice_id", nullable = false)
-    private String invoiceId;
+    private Long invoiceId;
+
+    @jakarta.persistence.ManyToOne
+    @jakarta.persistence.JoinColumn(name = "customer_id", nullable = false)
+    private CustomerClass customer;
 
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
@@ -49,10 +54,11 @@ public class PaymentClass {
     @Column(name = "transaction_ref", length = 100)
     private String transactionRef;
 
-    public PaymentClass(String id, String tenantId, String invoiceId, BigDecimal amount, Method method, String transactionRef) {
+    public PaymentClass(String id, String tenantId, Long invoiceId, CustomerClass customer, BigDecimal amount, Method method, String transactionRef) {
         this.id = id;
         this.tenantId = tenantId;
         this.invoiceId = invoiceId;
+        this.customer = customer;
         this.amount = amount;
         this.method = method;
         this.transactionRef = transactionRef;
