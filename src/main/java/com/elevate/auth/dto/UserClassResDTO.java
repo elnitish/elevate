@@ -10,14 +10,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserClassResDTO {
 
-    Long id;
-    String username;
-    String role;
+    private String id;
+    private String tenantId;
+    private String username;
+    private String email;
+    private String role;
 
     public UserClassResDTO(UserClass userClass){
         this.id = userClass.getId();
+        this.tenantId = userClass.getTenantId();
         this.username = userClass.getUsername();
-        this.role = userClass.getRole();
+        this.email = userClass.getEmail();
+        this.role = userClass.getRole().name();
     }
-
 }

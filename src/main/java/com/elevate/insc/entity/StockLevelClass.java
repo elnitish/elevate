@@ -1,30 +1,41 @@
 package com.elevate.insc.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
 
-@Data
+import java.time.LocalDateTime;
+
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter @Setter
+@Getter
+@Setter
 @Table(name = "stock_levels")
 public class StockLevelClass {
+    
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false, foreignKey = @ForeignKey(name = "fk_stock_level_product"))
-    private ProductClass product;
-
-    @Column(name = "quantity")
-    private Integer quantity;
-
-    public StockLevelClass(ProductClass product, Integer quantity) {
-        this.product = product;
+    @Column(name = "id", length = 36)
+    private String id;
+    
+    @Column(name = "tenant_id", nullable = false, length = 36)
+    private String tenantId;
+    
+    @Column(name = "product_id", nullable = false, length = 36)
+    private String productId;
+    
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity = 0;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+    
+    public StockLevelClass(String id, String tenantId, String productId, Integer quantity) {
+        this.id = id;
+        this.tenantId = tenantId;
+        this.productId = productId;
         this.quantity = quantity;
     }
-
 }

@@ -2,19 +2,17 @@ package com.elevate.insc.service;
 
 import com.elevate.auth.dto.ApiResponse;
 import com.elevate.insc.entity.SupplierClass;
-import com.elevate.insc.repository.SupplierClassRepo;
+import com.elevate.insc.repository.SupplierRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class SupplierService {
-    private final SupplierClassRepo supplierClassRepo;
+    private final SupplierRepository supplierClassRepo;
 
 
-    public SupplierService(SupplierClassRepo supplierClassRepo) {
+    public SupplierService(SupplierRepository supplierClassRepo) {
         this.supplierClassRepo = supplierClassRepo;
     }
 

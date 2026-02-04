@@ -11,24 +11,34 @@ import lombok.Setter;
 public class UserClass {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    // Getter and Setter for username
+    @Column(name = "id", length = 36)
+    private String id;
+    
+    @Column(name = "tenant_id", nullable = false, length = 36)
+    private String tenantId;
+    
+    @Column(name = "username", nullable = false, length = 100)
     private String username;
-    // Getter and Setter for password
-    private String password;
-    // Getter and Setter for role
-
-    private String role;
+    
+    @Column(name = "email", length = 255)
+    private String email;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRole role = UserRole.USER;
+    
+    public enum UserRole {
+        ADMIN, USER
+    }
 
     public UserClass() {
-
     }
 
-    public UserClass(String username, String password, String role) {
+    public UserClass(String id, String tenantId, String username, String email, UserRole role) {
+        this.id = id;
+        this.tenantId = tenantId;
         this.username = username;
-        this.password = password;
+        this.email = email;
         this.role = role;
     }
-
 }
