@@ -1,0 +1,100 @@
+🏗️ Backend Services & Sub-Services (Monolithic Architecture)
+1. Authentication & User Management
+Handles login, registration, access control.
+Sub-services:
+	• User Registration (/auth/register)
+	• Login & JWT Token (/auth/login)
+	• Role-based Access Control (Admin, Employee, Customer)
+	• Manage Users (/users, /users/:id)
+	• Permissions (who can access Finance, HR, etc.)
+
+2. Finance & Accounting Service
+Manages money flow.
+Sub-services:
+	• Invoices
+		○ Create, send, update, delete (/finance/invoices)
+		○ Track payment status
+	• Payments
+		○ Record payments (/finance/payments)
+		○ Refunds/adjustments
+	• Expenses
+		○ Add expense (/finance/expenses)
+		○ Categorize (rent, salary, utilities)
+	• Payroll
+		○ Salary calculation
+		○ Generate payslips (/finance/payroll)
+	• Reports
+		○ Profit/Loss summary
+		○ Monthly finance overview
+
+3. Inventory & Supply Chain Service
+For businesses with products or stock.
+Sub-services:
+	• Product Management (/inventory/products)
+	• Stock Levels (view, update, low stock alerts)
+	• Suppliers (/inventory/suppliers)
+	• Purchase Orders (/inventory/orders)
+	• Stock Movements (in/out transactions)
+
+4. HR (Human Resources) Service
+Employee management.
+Sub-services:
+	• Employee Profiles (/hr/employees)
+	• Attendance (/hr/attendance)
+	• Leave Requests (/hr/leaves)
+	• Performance Reviews (/hr/performance)
+	• Payroll Integration (connects with Finance service)
+
+5. CRM (Customer Relationship Management)
+Manages leads, sales, customers.
+Sub-services:
+	• Customer Profiles (/crm/customers)
+	• Leads (/crm/leads)
+	• Sales Pipeline (/crm/pipeline)
+	• Customer Interactions (calls, emails, meetings log)
+
+6. Project & Task Management Service
+Track business tasks/projects.
+Sub-services:
+	• Projects (/projects)
+	• Tasks (/projects/:id/tasks)
+	• Assignments (which employee is assigned)
+	• Progress Tracking (status updates, deadlines)
+
+7. Notifications Service
+For communication (email/SMS/alerts).
+Sub-services:
+	• Email Notifications (/notify/email)
+	• SMS Notifications (/notify/sms)
+	• In-App Notifications (for dashboard alerts)
+	• Event-driven triggers (invoice due, leave approved, low stock)
+
+8. Analytics & Reporting Service
+Business intelligence dashboards.
+Sub-services:
+	• Finance Reports (/reports/finance)
+	• HR Reports (/reports/hr)
+	• Inventory Reports (/reports/inventory)
+	• CRM Reports (/reports/sales)
+	• Export (PDF/Excel/CSV)
+
+9. Document & File Management (Optional but useful)
+Central document hub.
+Sub-services:
+	• Store employee contracts, invoices, receipts.
+	• Upload/Download (/files/upload, /files/download)
+	• Digital Signatures / Approvals
+
+🏆 Recommended Build Order (MVP → Advanced)
+✅ Phase 1 (MVP)
+	• Auth & User Management
+	• Finance (Invoices + Payments + Expenses)
+	• Inventory (Products + Stock)
+✅ Phase 2
+	• HR (Employees + Attendance + Payroll)
+	• CRM (Customers + Leads)
+	• Notifications
+✅ Phase 3 (Advanced)
+	• Projects & Tasks
+	• Analytics & Reporting
+	• Document Management

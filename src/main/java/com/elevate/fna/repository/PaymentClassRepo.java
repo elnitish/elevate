@@ -1,5 +1,6 @@
 package com.elevate.fna.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,8 @@ public interface PaymentClassRepo extends JpaRepository<PaymentClass, String> {
     List<PaymentClass> findByTenantId(String tenantId);
     
     List<PaymentClass> findByTenantIdAndInvoiceId(String tenantId, Long invoiceId);
+    
+    List<PaymentClass> findByTenantIdAndPaymentDateBetween(String tenantId, LocalDate startDate, LocalDate endDate);
     
     Optional<PaymentClass> findByTenantIdAndId(String tenantId, String id);
     

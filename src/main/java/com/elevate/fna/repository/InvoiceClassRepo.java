@@ -16,6 +16,7 @@ public interface InvoiceClassRepo extends JpaRepository<InvoiceClass, Long> {
     List<InvoiceClass> findByTenantId(String tenantId);
     List<InvoiceClass> findByTenantIdAndStatus(String tenantId, InvoiceClass.Status status);
     List<InvoiceClass> findByTenantIdAndDate(String tenantId, LocalDate date);
+    List<InvoiceClass> findByTenantIdAndDateBetween(String tenantId, LocalDate startDate, LocalDate endDate);
     
     @Query("SELECT i FROM InvoiceClass i WHERE i.tenantId = :tenantId AND i.status = :status")
     List<InvoiceClass> findByTenantIdAndStatusString(@Param("tenantId") String tenantId, @Param("status") String status);
