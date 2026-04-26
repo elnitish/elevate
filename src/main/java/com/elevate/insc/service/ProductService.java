@@ -7,6 +7,8 @@ import java.util.Optional;
 import com.elevate.insc.dto.ProductReqDTO;
 import com.elevate.insc.dto.UpdateProductReqDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.elevate.auth.dto.ApiResponse;
@@ -33,6 +35,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", key = "#tenantID")
     public ApiResponse<?> createNewProduct(ProductReqDTO product, String tenantID) {
         // Validate that the category exists
         if (!categoryRepository.existsById(product.getCategoryId())) {
@@ -53,7 +56,24 @@ public class ProductService {
             product.getCostPrice(),
             product.getSellingPrice()
         );
-        
+
+        // Set optional SKU/barcode/unit fields
+        if (product.getSku() != null && !product.getSku().isBlank()) {
+            if (productClassRepo.existsByTenantIdAndSku(tenantID, product.getSku())) {
+                return new ApiResponse<>("Product with SKU '" + product.getSku() + "' already exists", 400, null);
+            }
+            productClass.setSku(product.getSku());
+        }
+        if (product.getBarcode() != null && !product.getBarcode().isBlank()) {
+            if (productClassRepo.existsByTenantIdAndBarcode(tenantID, product.getBarcode())) {
+                return new ApiResponse<>("Product with barcode '" + product.getBarcode() + "' already exists", 400, null);
+            }
+            productClass.setBarcode(product.getBarcode());
+        }
+        if (product.getUnit() != null && !product.getUnit().isBlank()) {
+            productClass.setUnit(product.getUnit());
+        }
+
         // Save the product to database
         ProductClass newProduct = productClassRepo.save(productClass);
         
@@ -63,6 +83,7 @@ public class ProductService {
         return new ApiResponse<>("Product created successfully", 200, newProduct);
     }
 
+    @Cacheable(value = "products", key = "#tenantID")
     public ApiResponse<?> returnAllProducts(String tenantID) {
         List<ProductClass> allProducts = productClassRepo.findByTenantId(tenantID);
         return new ApiResponse<>("All products returned successfully",200,allProducts);
@@ -73,8 +94,25 @@ public class ProductService {
         return new ApiResponse<>("All products returned successfully",200,product.get());
     }
     
+    @Cacheable(value = "productById", key = "#productId")
     public Optional<ProductClass> getProductById(String productId) {
         return productClassRepo.findById(productId);
+    }
+
+    public ApiResponse<?> getProductByBarcode(String tenantId, String barcode) {
+        Optional<ProductClass> product = productClassRepo.findByTenantIdAndBarcode(tenantId, barcode);
+        if (product.isEmpty()) {
+            return new ApiResponse<>("Product not found for barcode: " + barcode, 404, null);
+        }
+        return new ApiResponse<>("Product found", 200, product.get());
+    }
+
+    public ApiResponse<?> getProductBySku(String tenantId, String sku) {
+        Optional<ProductClass> product = productClassRepo.findByTenantIdAndSku(tenantId, sku);
+        if (product.isEmpty()) {
+            return new ApiResponse<>("Product not found for SKU: " + sku, 404, null);
+        }
+        return new ApiResponse<>("Product found", 200, product.get());
     }
 
     public ApiResponse<?> returnAllProductStock() {
@@ -102,6 +140,7 @@ public class ProductService {
         }
     }
 
+    @CacheEvict(value = {"products", "productById"}, allEntries = true)
     public ApiResponse<?> updateProductInDB(String tenantID, UpdateProductReqDTO updateProductReqDTO) {
         Optional<ProductClass> product = productClassRepo.findByTenantIdAndId(tenantID, updateProductReqDTO.getId());
         if(product.isEmpty()) {
@@ -128,6 +167,7 @@ public class ProductService {
 
     }
 
+    @CacheEvict(value = {"products", "productById"}, allEntries = true)
     public ApiResponse<?> deleteProductFromDB(String tenantID, String productId) {
         Optional<ProductClass> product = productClassRepo.findByTenantIdAndId(tenantID, productId);
         if(product.isEmpty()) {

@@ -23,6 +23,15 @@ public class CustomerReqDTO {
     private String source;
 
     private String notes;
+
+    private String customerType;
+
+    private java.math.BigDecimal creditLimit;
+
+    private Integer paymentTermsDays;
+
+    @Size(max = 50)
+    private String taxId;
 }
 
 

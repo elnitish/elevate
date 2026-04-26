@@ -23,4 +23,6 @@ public interface PayrollRepository extends JpaRepository<PayrollClass, Long> {
 
     List<PayrollClass> findByTenantIdOrderByYearMonthDesc(String tenantId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(p.netSalary), 0) FROM PayrollClass p WHERE p.tenantId = :tenantId AND p.yearMonth = :yearMonth")
+    java.math.BigDecimal sumNetSalaryByTenantAndYearMonth(@org.springframework.data.repository.query.Param("tenantId") String tenantId, @org.springframework.data.repository.query.Param("yearMonth") String yearMonth);
 }

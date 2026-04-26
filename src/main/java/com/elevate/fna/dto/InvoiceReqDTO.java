@@ -30,7 +30,15 @@ public class InvoiceReqDTO {
 
     @NotNull
     private InvoiceClass.Status status;
-    
+
+    private java.math.BigDecimal taxRate; // optional tax rate (e.g. 18.00 for 18%)
+
+    private java.math.BigDecimal discountAmount; // optional invoice-level discount
+
+    private Integer paymentTermsDays; // optional, overrides customer default
+
+    private String notes;
+
     @NotNull
     private List<InvoiceItemReqDTO> items;  // list of products in this invoice
 }

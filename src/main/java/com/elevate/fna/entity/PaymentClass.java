@@ -54,6 +54,9 @@ public class PaymentClass {
     @Column(name = "transaction_ref", length = 100)
     private String transactionRef;
 
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     public PaymentClass(String id, String tenantId, Long invoiceId, CustomerClass customer, BigDecimal amount, Method method, String transactionRef) {
         this.id = id;
         this.tenantId = tenantId;

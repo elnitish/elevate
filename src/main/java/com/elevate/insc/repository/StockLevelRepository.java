@@ -1,6 +1,8 @@
 package com.elevate.insc.repository;
 
 import com.elevate.insc.entity.StockLevelClass;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,24 +13,45 @@ import java.util.Optional;
 
 @Repository
 public interface StockLevelRepository extends JpaRepository<StockLevelClass, String> {
-    
-    // Find stock level by tenant and product
+
     Optional<StockLevelClass> findByTenantIdAndProductId(String tenantId, String productId);
-    
-    // Find all stock levels for a tenant
+
     List<StockLevelClass> findByTenantId(String tenantId);
-    
-    // Find all stock levels for a product
+
+    @Query("SELECT sl FROM StockLevelClass sl JOIN FETCH sl.product WHERE sl.tenantId = :tenantId")
+    Page<StockLevelClass> findByTenantIdWithProduct(@Param("tenantId") String tenantId, Pageable pageable);
+
+    @Query(value = "SELECT sl FROM StockLevelClass sl JOIN FETCH sl.product WHERE sl.tenantId = :tenantId",
+           countQuery = "SELECT COUNT(sl) FROM StockLevelClass sl WHERE sl.tenantId = :tenantId")
+    Page<StockLevelClass> findByTenantIdWithProductPaged(@Param("tenantId") String tenantId, Pageable pageable);
+
     List<StockLevelClass> findByProductId(String productId);
-    
-    // Check if stock level exists for a product
+
     boolean existsByTenantIdAndProductId(String tenantId, String productId);
-    
-    // Get total stock quantity for a product
+
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM StockLevelClass s WHERE s.tenantId = :tenantId AND s.productId = :productId")
     Integer getTotalStockByTenantAndProduct(@Param("tenantId") String tenantId, @Param("productId") String productId);
-    
-    // Find products with low stock (quantity <= threshold)
-    @Query("SELECT s FROM StockLevelClass s WHERE s.tenantId = :tenantId AND s.quantity <= :threshold")
+
+    @Query("SELECT s FROM StockLevelClass s JOIN FETCH s.product WHERE s.tenantId = :tenantId AND s.quantity <= :threshold")
     List<StockLevelClass> findLowStockProducts(@Param("tenantId") String tenantId, @Param("threshold") Integer threshold);
+
+    @Query(value = "SELECT s FROM StockLevelClass s JOIN FETCH s.product WHERE s.tenantId = :tenantId AND s.quantity <= :threshold",
+           countQuery = "SELECT COUNT(s) FROM StockLevelClass s WHERE s.tenantId = :tenantId AND s.quantity <= :threshold")
+    Page<StockLevelClass> findLowStockProducts(@Param("tenantId") String tenantId, @Param("threshold") Integer threshold, Pageable pageable);
+
+    // Warehouse-specific queries
+    Optional<StockLevelClass> findByTenantIdAndProductIdAndWarehouseId(String tenantId, String productId, String warehouseId);
+
+    boolean existsByTenantIdAndProductIdAndWarehouseId(String tenantId, String productId, String warehouseId);
+
+    @Query(value = "SELECT sl FROM StockLevelClass sl JOIN FETCH sl.product LEFT JOIN FETCH sl.warehouse WHERE sl.tenantId = :tenantId AND sl.warehouseId = :warehouseId",
+           countQuery = "SELECT COUNT(sl) FROM StockLevelClass sl WHERE sl.tenantId = :tenantId AND sl.warehouseId = :warehouseId")
+    Page<StockLevelClass> findByTenantIdAndWarehouseIdWithProduct(@Param("tenantId") String tenantId, @Param("warehouseId") String warehouseId, Pageable pageable);
+
+    @Query("SELECT s FROM StockLevelClass s JOIN FETCH s.product WHERE s.tenantId = :tenantId AND s.quantity <= s.reorderPoint")
+    List<StockLevelClass> findLowStockByReorderPoint(@Param("tenantId") String tenantId);
+
+    @Query(value = "SELECT s FROM StockLevelClass s JOIN FETCH s.product WHERE s.tenantId = :tenantId AND s.quantity <= s.reorderPoint",
+           countQuery = "SELECT COUNT(s) FROM StockLevelClass s WHERE s.tenantId = :tenantId AND s.quantity <= s.reorderPoint")
+    Page<StockLevelClass> findLowStockByReorderPoint(@Param("tenantId") String tenantId, Pageable pageable);
 }

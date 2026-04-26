@@ -51,4 +51,16 @@ public class ProductController {
         ApiResponse<?> response = productService.deleteProductFromDB((String)request.getAttribute("tenantID"),productId);
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
+
+    @GetMapping("/barcode/{barcode}")
+    public ResponseEntity<ApiResponse<?>> getProductByBarcode(HttpServletRequest request, @PathVariable String barcode) {
+        ApiResponse<?> response = productService.getProductByBarcode((String) request.getAttribute("tenantID"), barcode);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
+
+    @GetMapping("/sku/{sku}")
+    public ResponseEntity<ApiResponse<?>> getProductBySku(HttpServletRequest request, @PathVariable String sku) {
+        ApiResponse<?> response = productService.getProductBySku((String) request.getAttribute("tenantID"), sku);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
 }

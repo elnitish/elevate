@@ -1,6 +1,7 @@
 package com.elevate.fna.entity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -36,13 +37,11 @@ public class InvoiceItemsClass {
     @Column(name = "tenant_id", nullable = false, length = 36)
     private String tenantId;
 
-    // Many items → One Invoice
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id", nullable = false)
     @JsonBackReference
     private InvoiceClass invoice;
 
-    // Many items → One Product
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @JsonManagedReference
@@ -51,10 +50,22 @@ public class InvoiceItemsClass {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
+    @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(name = "line_total", precision = 10, scale = 2)
+    @Column(name = "discount_percent", precision = 5, scale = 2)
+    private BigDecimal discountPercent = BigDecimal.ZERO;
+
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "tax_rate", precision = 5, scale = 2)
+    private BigDecimal taxRate = BigDecimal.ZERO;
+
+    @Column(name = "tax_amount", precision = 12, scale = 2)
+    private BigDecimal taxAmount = BigDecimal.ZERO;
+
+    @Column(name = "line_total", precision = 12, scale = 2)
     private BigDecimal lineTotal;
 
     @CreationTimestamp
@@ -64,7 +75,7 @@ public class InvoiceItemsClass {
     public InvoiceItemsClass() {
     }
 
-    public InvoiceItemsClass(String id, String tenantId, InvoiceClass invoice, ProductClass product, 
+    public InvoiceItemsClass(String id, String tenantId, InvoiceClass invoice, ProductClass product,
                             Integer quantity, BigDecimal unitPrice) {
         this.id = id;
         this.tenantId = tenantId;
@@ -73,5 +84,26 @@ public class InvoiceItemsClass {
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    /**
+     * Calculate line total with discount and tax.
+     */
+    public void calculateTotals(BigDecimal itemDiscountPercent, BigDecimal itemTaxRate) {
+        BigDecimal gross = unitPrice.multiply(BigDecimal.valueOf(quantity));
+
+        // Apply line-item discount
+        this.discountPercent = itemDiscountPercent != null ? itemDiscountPercent : BigDecimal.ZERO;
+        this.discountAmount = gross.multiply(this.discountPercent)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        BigDecimal afterDiscount = gross.subtract(this.discountAmount);
+
+        // Apply tax
+        this.taxRate = itemTaxRate != null ? itemTaxRate : BigDecimal.ZERO;
+        this.taxAmount = afterDiscount.multiply(this.taxRate)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        this.lineTotal = afterDiscount.add(this.taxAmount);
     }
 }

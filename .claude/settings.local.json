@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn clean:*)",
+      "Bash(find /d/E/Elevate/src/main/java -name \"*.java\" -type f -exec grep -l \"enum \" {})"
+    ]
+  }
+}

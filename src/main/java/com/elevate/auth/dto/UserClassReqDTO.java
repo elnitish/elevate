@@ -9,7 +9,7 @@ import lombok.Data;
 public class UserClassReqDTO {
 
     @NotNull
-    @Size(min = 36, max = 36, message = "Tenant ID must be a valid UUID")
+    @Size(min = 3, max = 100, message = "Tenant ID must be between 3 and 100 characters")
     private String tenantId;
 
     @NotNull

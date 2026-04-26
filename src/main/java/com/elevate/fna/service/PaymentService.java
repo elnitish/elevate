@@ -75,7 +75,24 @@ public class PaymentService {
             PaymentClass.Method.valueOf(paymentReqDTO.getMethod().toUpperCase()),
             paymentReqDTO.getTransactionRef()
         );
-        invoice.setRemainingAmount(invoice.getRemainingAmount().subtract(newPayment.getAmount()));
+        // Validate payment doesn't exceed remaining amount
+        BigDecimal remaining = invoice.getRemainingAmount();
+        if (paymentReqDTO.getAmount().compareTo(remaining) > 0) {
+            return new ApiResponse<>("Payment amount (" + paymentReqDTO.getAmount() +
+                    ") exceeds remaining amount (" + remaining + ")", 400, null);
+        }
+
+        BigDecimal newRemaining = remaining.subtract(paymentReqDTO.getAmount());
+        invoice.setRemainingAmount(newRemaining);
+
+        // Auto-update invoice status
+        if (newRemaining.compareTo(BigDecimal.ZERO) == 0) {
+            invoice.setStatus(InvoiceClass.Status.PAID);
+        } else if (newRemaining.compareTo(invoice.getTotalAmount()) < 0) {
+            invoice.setStatus(InvoiceClass.Status.PARTIALLY_PAID);
+        }
+        invoiceClassRepo.save(invoice);
+
         PaymentClass savedPayment = paymentClassRepo.save(newPayment);
         customerLedgerService.addEntryForPayment(newPayment);
         PaymentResDTO responseDTO = new PaymentResDTO(savedPayment);
@@ -122,7 +139,16 @@ public class PaymentService {
         Optional<InvoiceClass> invoice = invoiceClassRepo.findByTenantIdAndInvoiceId(tenantId, paymentClass.getInvoiceId());
         if (invoice.isPresent()) {
             InvoiceClass invoiceClass = invoice.get();
-            invoiceClass.setRemainingAmount(invoiceClass.getRemainingAmount().add(paymentClass.getAmount()));
+            BigDecimal newRemaining = invoiceClass.getRemainingAmount().add(paymentClass.getAmount());
+            invoiceClass.setRemainingAmount(newRemaining);
+
+            // Revert status if it was fully paid
+            if (newRemaining.compareTo(BigDecimal.ZERO) > 0
+                    && newRemaining.compareTo(invoiceClass.getTotalAmount()) < 0) {
+                invoiceClass.setStatus(InvoiceClass.Status.PARTIALLY_PAID);
+            } else if (newRemaining.compareTo(invoiceClass.getTotalAmount()) >= 0) {
+                invoiceClass.setStatus(InvoiceClass.Status.PENDING);
+            }
             invoiceClassRepo.save(invoiceClass);
         }
         

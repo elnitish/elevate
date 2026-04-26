@@ -8,6 +8,8 @@ import com.elevate.insc.dto.UpdateCategoryReqDTO;
 import com.elevate.insc.entity.CategoryClass;
 import com.elevate.insc.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class CategoryService {
     }
     
     @Transactional
+    @CacheEvict(value = "categories", key = "#tenantID")
     public ApiResponse<?> createCategory(String tenantID,CategoryReqDTO categoryReqDTO) {
         // Check if category name already exists in this tenant
         if (categoryRepository.existsByTenantIdAndName(tenantID, categoryReqDTO.getName())) {
@@ -51,6 +54,7 @@ public class CategoryService {
         return new ApiResponse<>("Category created successfully", 201, responseDTO);
     }
     
+    @Cacheable(value = "categories", key = "#tenantId")
     public ApiResponse<?> getCategoriesByTenant(String tenantId) {
         List<CategoryClass> categories = categoryRepository.findByTenantId(tenantId);
         List<CategoryResDTO> categoryDTOs = categories.stream()
@@ -60,6 +64,7 @@ public class CategoryService {
     }
     
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public ApiResponse<?> updateCategory(String tenantID, UpdateCategoryReqDTO updateCategoryReqDTO) {
         Optional<CategoryClass> categoryOpt = categoryRepository.findById(updateCategoryReqDTO.getId());
         if (categoryOpt.isEmpty()) {
@@ -82,6 +87,7 @@ public class CategoryService {
     }
     
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public ApiResponse<?> deleteCategory(String categoryId) {
         if (!categoryRepository.existsById(categoryId)) {
             return new ApiResponse<>("Category not found", 404, null);

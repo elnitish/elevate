@@ -44,6 +44,16 @@ public class CustomerService {
         c.setAddress(dto.getAddress());
         c.setSource(dto.getSource());
         c.setNotes(dto.getNotes());
+        if (dto.getCustomerType() != null) {
+            c.setCustomerType(CustomerClass.CustomerType.valueOf(dto.getCustomerType().toUpperCase()));
+        }
+        if (dto.getCreditLimit() != null) {
+            c.setCreditLimit(dto.getCreditLimit());
+        }
+        if (dto.getPaymentTermsDays() != null) {
+            c.setPaymentTermsDays(dto.getPaymentTermsDays());
+        }
+        c.setTaxId(dto.getTaxId());
         CustomerClass saved = customerRepository.save(c);
         CustomerBalanceClass cb = new CustomerBalanceClass(saved);
         customerBalanceRepository.save(cb);
@@ -77,6 +87,12 @@ public class CustomerService {
         if (dto.getAddress() != null) c.setAddress(dto.getAddress());
         if (dto.getSource() != null) c.setSource(dto.getSource());
         if (dto.getNotes() != null) c.setNotes(dto.getNotes());
+        if (dto.getCustomerType() != null) {
+            c.setCustomerType(CustomerClass.CustomerType.valueOf(dto.getCustomerType().toUpperCase()));
+        }
+        if (dto.getCreditLimit() != null) c.setCreditLimit(dto.getCreditLimit());
+        if (dto.getPaymentTermsDays() != null) c.setPaymentTermsDays(dto.getPaymentTermsDays());
+        if (dto.getTaxId() != null) c.setTaxId(dto.getTaxId());
         CustomerClass saved = customerRepository.save(c);
         return new ApiResponse<>("Customer updated successfully", 200, new CustomerResDTO(saved));
     }
