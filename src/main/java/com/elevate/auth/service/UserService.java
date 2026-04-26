@@ -43,6 +43,12 @@ public class UserService {
 
 
     public ApiResponse<?> loginUser(UserClassReqDTO userClassReqDTO) {
+        // Debug logging
+        System.out.println("=== LOGIN ATTEMPT ===");
+        System.out.println("Tenant ID: " + userClassReqDTO.getTenantId());
+        System.out.println("Username: " + userClassReqDTO.getUsername());
+        System.out.println("Password provided: " + (userClassReqDTO.getPassword() != null ? "Yes (length: " + userClassReqDTO.getPassword().length() + ")" : "No"));
+        
         // Check auth credentials directly
         Optional<AuthCredentials> authOpt = authCredentialsRepository.findByTenantIdAndUsername(
                 userClassReqDTO.getTenantId(),
@@ -50,12 +56,19 @@ public class UserService {
         );
         
         if(authOpt.isEmpty()){
+            System.out.println("RESULT: User credentials not found in database");
+            System.out.println("===================");
             return new ApiResponse<>("User credentials not found",404,null);
         }
         
         AuthCredentials authCredentials = authOpt.get();
+        System.out.println("Found credentials in database for user: " + authCredentials.getUsername());
+        System.out.println("Password hash in DB: " + authCredentials.getPasswordHash().substring(0, 20) + "...");
         
-        if(bCryptPasswordEncoder.matches(userClassReqDTO.getPassword(), authCredentials.getPasswordHash())){
+        boolean passwordMatches = bCryptPasswordEncoder.matches(userClassReqDTO.getPassword(), authCredentials.getPasswordHash());
+        System.out.println("Password matches: " + passwordMatches);
+        
+        if(passwordMatches){
             // Only fetch user data after successful authentication
             Optional<UserClass> userOpt = userRepository.findByTenantIdAndUsername(
                     userClassReqDTO.getTenantId(), 

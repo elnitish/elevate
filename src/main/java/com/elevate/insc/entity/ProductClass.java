@@ -24,37 +24,49 @@ public class ProductClass {
     @Id
     @Column(name = "id", length = 36)
     private String id;
-    
+
     @Column(name = "tenant_id", nullable = false, length = 36)
     private String tenantId;
-    
+
     @Column(name = "category_id", nullable = false, length = 36)
     private String categoryId;
-    
+
+    @Column(name = "sku", length = 100)
+    private String sku;
+
+    @Column(name = "barcode", length = 100)
+    private String barcode;
+
     @Column(name = "name", nullable = false, length = 255)
     private String name;
-    
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-    
+
+    @Column(name = "unit", nullable = false, length = 50)
+    private String unit = "PCS";
+
     @Column(name = "cost_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal costPrice;
-    
+
     @Column(name = "selling_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal sellingPrice;
-    
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-    
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-    
+
     public ProductClass() {
     }
-    
-    public ProductClass(String id, String tenantId, String categoryId, String name, String description, 
+
+    public ProductClass(String id, String tenantId, String categoryId, String name, String description,
                        BigDecimal costPrice, BigDecimal sellingPrice) {
         this.id = id;
         this.tenantId = tenantId;

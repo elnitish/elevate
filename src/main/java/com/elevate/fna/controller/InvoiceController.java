@@ -50,4 +50,15 @@ public class InvoiceController {
         return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
     }
 
+    @GetMapping("/invoices/overdue")
+    public ResponseEntity<?> getOverdueInvoices(HttpServletRequest request) {
+        ApiResponse<?> response = invoiceService.returnOverdueInvoices((String) request.getAttribute("tenantID"));
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/invoices/{id}/cancel")
+    public ResponseEntity<?> cancelInvoice(HttpServletRequest request, @PathVariable Long id) {
+        ApiResponse<?> response = invoiceService.cancelInvoice((String) request.getAttribute("tenantID"), id);
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getCode()));
+    }
 }

@@ -3,22 +3,22 @@ package com.elevate.fna.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.elevate.fna.dto.ExpenseSummaryDTO;
 import com.elevate.fna.dto.MonthlyFinanceOverviewDTO;
 import com.elevate.fna.dto.ProfitLossReportDTO;
 import com.elevate.fna.entity.ExpenseClass;
 import com.elevate.fna.entity.InvoiceClass;
-import com.elevate.fna.entity.PaymentClass;
-import com.elevate.fna.entity.PayrollClass;
 import com.elevate.fna.repository.ExpenseRepository;
 import com.elevate.fna.repository.InvoiceClassRepo;
 import com.elevate.fna.repository.PaymentClassRepo;
@@ -27,380 +27,205 @@ import com.elevate.fna.repository.PayrollRepository;
 @Service
 public class FinanceReportService {
 
-    @Autowired
-    private InvoiceClassRepo invoiceRepository;
+    @Autowired private InvoiceClassRepo invoiceRepository;
+    @Autowired private PaymentClassRepo paymentRepository;
+    @Autowired private ExpenseRepository expenseRepository;
+    @Autowired private PayrollRepository payrollRepository;
 
-    @Autowired
-    private PaymentClassRepo paymentRepository;
-
-    @Autowired
-    private ExpenseRepository expenseRepository;
-
-    @Autowired
-    private PayrollRepository payrollRepository;
-
-    /**
-     * Generate Profit & Loss Report for a specific year-month
-     */
+    @Transactional(readOnly = true)
     public ProfitLossReportDTO generateProfitLossReport(String tenantId, String yearMonth) {
         ProfitLossReportDTO report = new ProfitLossReportDTO();
-        
-        try {
-            YearMonth ym = YearMonth.parse(yearMonth);
-            LocalDate startDate = ym.atDay(1);
-            LocalDate endDate = ym.atEndOfMonth();
-            
-            report.setPeriod(ym.getMonth().toString() + " " + ym.getYear());
-            report.setReportDate(LocalDate.now());
+        YearMonth ym = YearMonth.parse(yearMonth);
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
 
-            // Get invoices and payments for the period
-            List<InvoiceClass> invoices = invoiceRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
-            List<PaymentClass> payments = paymentRepository.findByTenantIdAndPaymentDateBetween(tenantId, startDate, endDate);
-            
-            // Calculate total revenue from payments
-            BigDecimal totalRevenue = payments.stream()
-                    .map(PaymentClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            report.setTotalRevenue(totalRevenue);
+        report.setPeriod(ym.getMonth().toString() + " " + ym.getYear());
+        report.setReportDate(LocalDate.now());
 
-            // Calculate total expenses
-            List<ExpenseClass> expenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, startDate, endDate);
-            BigDecimal totalExpenses = expenses.stream()
-                    .map(ExpenseClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            report.setTotalExpenses(totalExpenses);
+        // SQL aggregation — no more loading full lists
+        BigDecimal totalRevenue = paymentRepository.sumAmountByTenantAndDateBetween(
+                tenantId, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+        BigDecimal totalExpenses = expenseRepository.sumAmountByTenantAndDateBetween(tenantId, startDate, endDate);
+        BigDecimal totalPayroll = payrollRepository.sumNetSalaryByTenantAndYearMonth(tenantId, yearMonth);
 
-            // Calculate total payroll
-            List<PayrollClass> payrolls = payrollRepository.findByTenantIdAndYearMonth(tenantId, yearMonth);
-            BigDecimal totalPayroll = payrolls.stream()
-                    .map(PayrollClass::getNetSalary)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            report.setTotalPayroll(totalPayroll);
+        report.setTotalRevenue(totalRevenue);
+        report.setTotalExpenses(totalExpenses);
+        report.setTotalPayroll(totalPayroll);
 
-            // Calculate totals
-            BigDecimal totalCosts = totalExpenses.add(totalPayroll);
-            BigDecimal grossProfit = totalRevenue.subtract(totalExpenses);
-            BigDecimal netProfit = totalRevenue.subtract(totalCosts);
-            
-            report.setGrossProfit(grossProfit);
-            report.setNetProfit(netProfit);
+        BigDecimal totalCosts = totalExpenses.add(totalPayroll);
+        report.setGrossProfit(totalRevenue.subtract(totalExpenses));
+        report.setNetProfit(totalRevenue.subtract(totalCosts));
 
-            // Calculate profit margin
-            if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
-                Double profitMargin = netProfit.divide(totalRevenue, 4, RoundingMode.HALF_UP)
-                        .multiply(BigDecimal.valueOf(100)).doubleValue();
-                report.setProfitMargin(profitMargin);
-            } else {
-                report.setProfitMargin(0.0);
-            }
-
-            // Invoice statistics
-            report.setTotalInvoices((long) invoices.size());
-            long paidInvoices = invoices.stream()
-                    .filter(inv -> inv.getStatus() == InvoiceClass.Status.PAID)
-                    .count();
-            report.setTotalPaidInvoices(paidInvoices);
-            report.setTotalPendingInvoices((long) invoices.size() - paidInvoices);
-
-            // Payment amounts
-            BigDecimal totalPendingAmount = invoices.stream()
-                    .filter(inv -> inv.getStatus() != InvoiceClass.Status.PAID)
-                    .map(InvoiceClass::getRemainingAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-            report.setTotalPaidAmount(totalRevenue);
-            report.setTotalPendingAmount(totalPendingAmount);
-
-            // Generate summary
-            String summary = String.format(
-                "Net Profit: %s | Total Revenue: %s | Total Expenses: %s | Profit Margin: %.2f%%",
-                netProfit, totalRevenue, totalCosts, report.getProfitMargin()
-            );
-            report.setSummary(summary);
-
-        } catch (Exception e) {
-            report.setSummary("Error generating report: " + e.getMessage());
+        if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            report.setProfitMargin(report.getNetProfit()
+                    .divide(totalRevenue, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100)).doubleValue());
+        } else {
+            report.setProfitMargin(0.0);
         }
+
+        // Invoice counts via SQL
+        long totalInvoices = invoiceRepository.countByTenantAndDateBetween(tenantId, startDate, endDate);
+        long paidInvoices = invoiceRepository.countByTenantAndStatusAndDateBetween(tenantId, InvoiceClass.Status.PAID, startDate, endDate);
+
+        report.setTotalInvoices(totalInvoices);
+        report.setTotalPaidInvoices(paidInvoices);
+        report.setTotalPendingInvoices(totalInvoices - paidInvoices);
+        report.setTotalPaidAmount(totalRevenue);
+        report.setTotalPendingAmount(invoiceRepository.sumOutstandingReceivables(tenantId));
+
+        report.setSummary(String.format(
+                "Net Profit: %s | Revenue: %s | Costs: %s | Margin: %.2f%%",
+                report.getNetProfit(), totalRevenue, totalCosts, report.getProfitMargin()));
 
         return report;
     }
 
-    /**
-     * Generate Monthly Finance Overview
-     */
+    @Transactional(readOnly = true)
     public MonthlyFinanceOverviewDTO generateMonthlyOverview(String tenantId, String yearMonth) {
         MonthlyFinanceOverviewDTO overview = new MonthlyFinanceOverviewDTO();
-        
-        try {
-            YearMonth ym = YearMonth.parse(yearMonth);
-            LocalDate startDate = ym.atDay(1);
-            LocalDate endDate = ym.atEndOfMonth();
-            
-            overview.setReportDate(LocalDate.now());
-            overview.setMonth(ym.getMonth().toString() + " " + ym.getYear());
+        YearMonth ym = YearMonth.parse(yearMonth);
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
 
-            // Get all transactions for the month
-            List<InvoiceClass> invoices = invoiceRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
-            List<PaymentClass> payments = paymentRepository.findByTenantIdAndPaymentDateBetween(tenantId, startDate, endDate);
-            List<ExpenseClass> expenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, startDate, endDate);
-            List<PayrollClass> payrolls = payrollRepository.findByTenantIdAndYearMonth(tenantId, yearMonth);
+        overview.setReportDate(LocalDate.now());
+        overview.setMonth(ym.getMonth().toString() + " " + ym.getYear());
 
-            // Calculate income
-            BigDecimal totalIncome = payments.stream()
-                    .map(PaymentClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            overview.setTotalIncome(totalIncome);
+        // SQL aggregation
+        BigDecimal totalIncome = paymentRepository.sumAmountByTenantAndDateBetween(
+                tenantId, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+        BigDecimal totalExpenses = expenseRepository.sumAmountByTenantAndDateBetween(tenantId, startDate, endDate);
 
-            // Calculate expenses
-            BigDecimal totalExpenses = expenses.stream()
-                    .map(ExpenseClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            overview.setTotalExpenses(totalExpenses);
+        overview.setTotalIncome(totalIncome);
+        overview.setTotalExpenses(totalExpenses);
+        overview.setNetIncome(totalIncome.subtract(totalExpenses));
 
-            // Calculate net income
-            BigDecimal netIncome = totalIncome.subtract(totalExpenses);
-            overview.setNetIncome(netIncome);
+        long invoiceCount = invoiceRepository.countByTenantAndDateBetween(tenantId, startDate, endDate);
+        long paidCount = invoiceRepository.countByTenantAndStatusAndDateBetween(tenantId, InvoiceClass.Status.PAID, startDate, endDate);
 
-            // Invoice statistics
-            overview.setInvoiceCount((long) invoices.size());
-            long paidCount = invoices.stream()
-                    .filter(inv -> inv.getStatus() == InvoiceClass.Status.PAID)
-                    .count();
-            overview.setPaidInvoiceCount(paidCount);
-            overview.setPendingInvoiceCount((long) invoices.size() - paidCount);
+        overview.setInvoiceCount(invoiceCount);
+        overview.setPaidInvoiceCount(paidCount);
+        overview.setPendingInvoiceCount(invoiceCount - paidCount);
 
-            BigDecimal totalInvoiceAmount = invoices.stream()
-                    .map(InvoiceClass::getTotalAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            overview.setTotalInvoiceAmount(totalInvoiceAmount);
+        BigDecimal totalInvoiceAmount = invoiceRepository.sumTotalAmountByTenantAndDateBetween(tenantId, startDate, endDate);
+        overview.setTotalInvoiceAmount(totalInvoiceAmount);
+        overview.setTotalPaidAmount(totalIncome);
+        overview.setTotalPendingAmount(invoiceRepository.sumOutstandingReceivables(tenantId));
 
-            BigDecimal totalPendingAmount = invoices.stream()
-                    .filter(inv -> inv.getStatus() != InvoiceClass.Status.PAID)
-                    .map(InvoiceClass::getRemainingAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            overview.setTotalPaidAmount(totalIncome);
-            overview.setTotalPendingAmount(totalPendingAmount);
+        // Expense breakdown by category — still needs row-level data, but only for the period
+        long expenseCount = expenseRepository.countByTenantAndDateBetween(tenantId, startDate, endDate);
+        overview.setExpenseCount(expenseCount);
 
-            // Expense statistics
-            overview.setExpenseCount((long) expenses.size());
-            overview.setExpenseByCategory(getExpenseByCategoryMap(expenses));
+        List<ExpenseClass> expenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, startDate, endDate);
+        overview.setExpenseByCategory(expenses.stream()
+                .collect(Collectors.groupingBy(ExpenseClass::getCategory,
+                        Collectors.reducing(BigDecimal.ZERO, ExpenseClass::getAmount, BigDecimal::add))));
 
-            // Payroll statistics
-            BigDecimal totalPayrollExpense = payrolls.stream()
-                    .map(PayrollClass::getNetSalary)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            overview.setTotalPayrollExpense(totalPayrollExpense);
-            overview.setPayrollCount((long) payrolls.size());
+        BigDecimal totalPayroll = payrollRepository.sumNetSalaryByTenantAndYearMonth(tenantId, yearMonth);
+        overview.setTotalPayrollExpense(totalPayroll);
 
-            // Determine trend
-            overview.setTrend(determineTrend(tenantId, ym));
-
-        } catch (Exception e) {
-            overview.setMonth("Error: " + e.getMessage());
-        }
+        // Trend comparison
+        overview.setTrend(determineTrend(tenantId, ym));
 
         return overview;
     }
 
-    /**
-     * Get expense summary by category
-     */
+    @Transactional(readOnly = true)
     public List<ExpenseSummaryDTO> getExpenseSummary(String tenantId, String yearMonth) {
-        try {
-            YearMonth ym = YearMonth.parse(yearMonth);
-            LocalDate startDate = ym.atDay(1);
-            LocalDate endDate = ym.atEndOfMonth();
+        YearMonth ym = YearMonth.parse(yearMonth);
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
 
-            List<ExpenseClass> expenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, startDate, endDate);
+        List<ExpenseClass> expenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, startDate, endDate);
+        BigDecimal totalExpenses = expenseRepository.sumAmountByTenantAndDateBetween(tenantId, startDate, endDate);
+        BigDecimal finalTotal = totalExpenses;
 
-            BigDecimal totalExpenses = expenses.stream()
-                    .map(ExpenseClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Map<String, BigDecimal> grouped = expenses.stream()
+                .collect(Collectors.groupingBy(ExpenseClass::getCategory,
+                        Collectors.reducing(BigDecimal.ZERO, ExpenseClass::getAmount, BigDecimal::add)));
 
-            BigDecimal finalTotal = totalExpenses;
-            
-            return expenses.stream()
-                    .collect(Collectors.groupingBy(
-                        ExpenseClass::getCategory,
-                        Collectors.reducing(
-                            BigDecimal.ZERO,
-                            ExpenseClass::getAmount,
-                            BigDecimal::add
-                        )
-                    ))
-                    .entrySet().stream()
-                    .map(entry -> {
-                        BigDecimal categoryTotal = entry.getValue();
-                        Double percentage = finalTotal.compareTo(BigDecimal.ZERO) > 0 ? 
-                            categoryTotal.divide(finalTotal, 4, RoundingMode.HALF_UP)
-                                .multiply(BigDecimal.valueOf(100)).doubleValue() : 0.0;
-                        
-                        long count = expenses.stream()
-                                .filter(e -> e.getCategory().equals(entry.getKey()))
-                                .count();
-                        
-                        return new ExpenseSummaryDTO(entry.getKey(), categoryTotal, count, percentage);
-                    })
-                    .sorted((a, b) -> b.getTotalAmount().compareTo(a.getTotalAmount()))
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            return List.of();
-        }
+        return grouped.entrySet().stream()
+                .map(entry -> {
+                    BigDecimal categoryTotal = entry.getValue();
+                    Double pct = finalTotal.compareTo(BigDecimal.ZERO) > 0
+                            ? categoryTotal.divide(finalTotal, 4, RoundingMode.HALF_UP)
+                                    .multiply(BigDecimal.valueOf(100)).doubleValue()
+                            : 0.0;
+                    long count = expenses.stream().filter(e -> e.getCategory().equals(entry.getKey())).count();
+                    return new ExpenseSummaryDTO(entry.getKey(), categoryTotal, count, pct);
+                })
+                .sorted((a, b) -> b.getTotalAmount().compareTo(a.getTotalAmount()))
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Get year-to-date P&L report
-     */
+    @Transactional(readOnly = true)
     public ProfitLossReportDTO generateYearToDateReport(String tenantId, int year) {
         ProfitLossReportDTO report = new ProfitLossReportDTO();
-        
-        try {
-            LocalDate startDate = LocalDate.of(year, 1, 1);
-            LocalDate endDate = LocalDate.of(year, 12, 31);
-            
-            report.setPeriod("Year " + year);
-            report.setReportDate(LocalDate.now());
+        LocalDate startDate = LocalDate.of(year, 1, 1);
+        LocalDate endDate = LocalDate.of(year, 12, 31);
 
-            // Get all invoices and payments for the year
-            List<InvoiceClass> invoices = invoiceRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
-            List<PaymentClass> payments = paymentRepository.findByTenantIdAndPaymentDateBetween(tenantId, startDate, endDate);
-            
-            // Calculate total revenue
-            BigDecimal totalRevenue = payments.stream()
-                    .map(PaymentClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            report.setTotalRevenue(totalRevenue);
+        report.setPeriod("Year " + year);
+        report.setReportDate(LocalDate.now());
 
-            // Calculate total expenses
-            List<ExpenseClass> expenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, startDate, endDate);
-            BigDecimal totalExpenses = expenses.stream()
-                    .map(ExpenseClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            report.setTotalExpenses(totalExpenses);
+        BigDecimal totalRevenue = paymentRepository.sumAmountByTenantAndDateBetween(
+                tenantId, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+        BigDecimal totalExpenses = expenseRepository.sumAmountByTenantAndDateBetween(tenantId, startDate, endDate);
 
-            // Calculate total payroll (all months in year)
-            BigDecimal totalPayroll = BigDecimal.ZERO;
-            for (int month = 1; month <= 12; month++) {
-                String yearMonth = String.format("%04d-%02d", year, month);
-                totalPayroll = totalPayroll.add(payrollRepository.findByTenantIdAndYearMonth(tenantId, yearMonth).stream()
-                        .map(PayrollClass::getNetSalary)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add));
-            }
-            report.setTotalPayroll(totalPayroll);
-
-            // Calculate totals
-            BigDecimal totalCosts = totalExpenses.add(totalPayroll);
-            BigDecimal grossProfit = totalRevenue.subtract(totalExpenses);
-            BigDecimal netProfit = totalRevenue.subtract(totalCosts);
-            
-            report.setGrossProfit(grossProfit);
-            report.setNetProfit(netProfit);
-
-            // Calculate profit margin
-            if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
-                Double profitMargin = netProfit.divide(totalRevenue, 4, RoundingMode.HALF_UP)
-                        .multiply(BigDecimal.valueOf(100)).doubleValue();
-                report.setProfitMargin(profitMargin);
-            } else {
-                report.setProfitMargin(0.0);
-            }
-
-            // Invoice statistics
-            report.setTotalInvoices((long) invoices.size());
-            long paidInvoices = invoices.stream()
-                    .filter(inv -> inv.getStatus() == InvoiceClass.Status.PAID)
-                    .count();
-            report.setTotalPaidInvoices(paidInvoices);
-            report.setTotalPendingInvoices((long) invoices.size() - paidInvoices);
-
-            report.setTotalPaidAmount(totalRevenue);
-            BigDecimal totalPendingAmount = invoices.stream()
-                    .filter(inv -> inv.getStatus() != InvoiceClass.Status.PAID)
-                    .map(InvoiceClass::getRemainingAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            report.setTotalPendingAmount(totalPendingAmount);
-
-            String summary = String.format(
-                "YTD Net Profit: %s | Total Revenue: %s | Total Expenses: %s | Profit Margin: %.2f%%",
-                netProfit, totalRevenue, totalCosts, report.getProfitMargin()
-            );
-            report.setSummary(summary);
-
-        } catch (Exception e) {
-            report.setSummary("Error generating report: " + e.getMessage());
+        // Sum payroll across all months
+        BigDecimal totalPayroll = BigDecimal.ZERO;
+        for (int month = 1; month <= 12; month++) {
+            String ym = String.format("%04d-%02d", year, month);
+            totalPayroll = totalPayroll.add(payrollRepository.sumNetSalaryByTenantAndYearMonth(tenantId, ym));
         }
+
+        report.setTotalRevenue(totalRevenue);
+        report.setTotalExpenses(totalExpenses);
+        report.setTotalPayroll(totalPayroll);
+
+        BigDecimal totalCosts = totalExpenses.add(totalPayroll);
+        report.setGrossProfit(totalRevenue.subtract(totalExpenses));
+        report.setNetProfit(totalRevenue.subtract(totalCosts));
+
+        if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            report.setProfitMargin(report.getNetProfit()
+                    .divide(totalRevenue, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100)).doubleValue());
+        } else {
+            report.setProfitMargin(0.0);
+        }
+
+        long totalInvoices = invoiceRepository.countByTenantAndDateBetween(tenantId, startDate, endDate);
+        long paidInvoices = invoiceRepository.countByTenantAndStatusAndDateBetween(tenantId, InvoiceClass.Status.PAID, startDate, endDate);
+
+        report.setTotalInvoices(totalInvoices);
+        report.setTotalPaidInvoices(paidInvoices);
+        report.setTotalPendingInvoices(totalInvoices - paidInvoices);
+        report.setTotalPaidAmount(totalRevenue);
+        report.setTotalPendingAmount(invoiceRepository.sumOutstandingReceivables(tenantId));
+
+        report.setSummary(String.format(
+                "YTD Net Profit: %s | Revenue: %s | Costs: %s | Margin: %.2f%%",
+                report.getNetProfit(), totalRevenue, totalCosts, report.getProfitMargin()));
 
         return report;
     }
 
-    /**
-     * Helper method to determine financial trend
-     */
     private String determineTrend(String tenantId, YearMonth currentMonth) {
-        try {
-            YearMonth previousMonth = currentMonth.minusMonths(1);
-            
-            // Get previous month's net income
-            LocalDate prevStart = previousMonth.atDay(1);
-            LocalDate prevEnd = previousMonth.atEndOfMonth();
-            
-            List<PaymentClass> prevPayments = paymentRepository.findByTenantIdAndPaymentDateBetween(tenantId, prevStart, prevEnd);
-            BigDecimal prevRevenue = prevPayments.stream()
-                    .map(PaymentClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        YearMonth prevMonth = currentMonth.minusMonths(1);
 
-            List<ExpenseClass> prevExpenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, prevStart, prevEnd);
-            BigDecimal prevExpenseTotal = prevExpenses.stream()
-                    .map(ExpenseClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal prevRevenue = paymentRepository.sumAmountByTenantAndDateBetween(tenantId,
+                prevMonth.atDay(1).atStartOfDay(), prevMonth.atEndOfMonth().atTime(LocalTime.MAX));
+        BigDecimal prevExpenses = expenseRepository.sumAmountByTenantAndDateBetween(tenantId,
+                prevMonth.atDay(1), prevMonth.atEndOfMonth());
+        BigDecimal prevNet = prevRevenue.subtract(prevExpenses);
 
-            BigDecimal prevNetIncome = prevRevenue.subtract(prevExpenseTotal);
+        BigDecimal currRevenue = paymentRepository.sumAmountByTenantAndDateBetween(tenantId,
+                currentMonth.atDay(1).atStartOfDay(), currentMonth.atEndOfMonth().atTime(LocalTime.MAX));
+        BigDecimal currExpenses = expenseRepository.sumAmountByTenantAndDateBetween(tenantId,
+                currentMonth.atDay(1), currentMonth.atEndOfMonth());
+        BigDecimal currNet = currRevenue.subtract(currExpenses);
 
-            // Get current month's net income
-            LocalDate currStart = currentMonth.atDay(1);
-            LocalDate currEnd = currentMonth.atEndOfMonth();
-            
-            List<PaymentClass> currPayments = paymentRepository.findByTenantIdAndPaymentDateBetween(tenantId, currStart, currEnd);
-            BigDecimal currRevenue = currPayments.stream()
-                    .map(PaymentClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            List<ExpenseClass> currExpenses = expenseRepository.findByTenantIdAndExpenseDateBetween(tenantId, currStart, currEnd);
-            BigDecimal currExpenseTotal = currExpenses.stream()
-                    .map(ExpenseClass::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            BigDecimal currNetIncome = currRevenue.subtract(currExpenseTotal);
-
-            // Compare
-            int comparison = currNetIncome.compareTo(prevNetIncome);
-            if (comparison > 0) {
-                return "INCREASING";
-            } else if (comparison < 0) {
-                return "DECREASING";
-            } else {
-                return "STABLE";
-            }
-
-        } catch (Exception e) {
-            return "UNKNOWN";
-        }
+        int cmp = currNet.compareTo(prevNet);
+        return cmp > 0 ? "INCREASING" : cmp < 0 ? "DECREASING" : "STABLE";
     }
-
-    /**
-     * Helper method to create category expense map
-     */
-    private Map<String, BigDecimal> getExpenseByCategoryMap(List<ExpenseClass> expenses) {
-        return expenses.stream()
-                .collect(Collectors.groupingBy(
-                    ExpenseClass::getCategory,
-                    Collectors.reducing(
-                        BigDecimal.ZERO,
-                        ExpenseClass::getAmount,
-                        BigDecimal::add
-                    )
-                ));
-    }
-
 }

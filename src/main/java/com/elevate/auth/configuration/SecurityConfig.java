@@ -1,47 +1,54 @@
 package com.elevate.auth.configuration;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
-public class SecurityConfig implements WebMvcConfigurer {
-
-    @Autowired
-    SessionAuthentication sessionAuthentication;
+@EnableWebSecurity
+public class SecurityConfig {
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .anyRequest().permitAll());
+        return http.build();
+    }
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public CorsFilter corsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.addAllowedOriginPattern("*"); // Allow all origins (localhost:8000, 5173, etc.)
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(sessionAuthentication)
-                .addPathPatterns("/**") // Apply to all paths
-                .excludePathPatterns(
-                    // Authentication endpoints (no session required)
-                    "/auth/tenantRegister", //create a new tenant
-                    "/auth/createUser",  // User creation endpoint
-                    "/auth/userLogin", //login a user in an organisation
-
-                    // Public endpoints that don't require authentication
-                    "/auth/validate-token/**",  // Token validation endpoint
-                    
-                    // Static resources and health checks
-                    "/static/**",
-                    "/css/**",
-                    "/js/**",
-                    "/images/**",
-                    "/favicon.ico",
-                    "/actuator/**",
-                    "/health",
-                    "/error"
-                );
-    }
-
 }

@@ -1,4 +1,4 @@
--- V17__create_employees.sql
+-- V16__create_employees.sql
 -- Create Employee table for HR module
 
 CREATE TABLE IF NOT EXISTS employee (

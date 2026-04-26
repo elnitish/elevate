@@ -1,6 +1,8 @@
 package com.elevate.insc.repository;
 
 import com.elevate.insc.entity.StockMovementClass;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,36 +13,51 @@ import java.util.List;
 
 @Repository
 public interface StockMovementRepository extends JpaRepository<StockMovementClass, String> {
-    
-    // Find movements by tenant and product
+
     List<StockMovementClass> findByTenantIdAndProductId(String tenantId, String productId);
-    
-    // Find movements by tenant
+
     List<StockMovementClass> findByTenantId(String tenantId);
-    
-    // Find movements by purchase order
+
+    @Query(value = "SELECT sm FROM StockMovementClass sm JOIN FETCH sm.product WHERE sm.tenantId = :tenantId",
+           countQuery = "SELECT COUNT(sm) FROM StockMovementClass sm WHERE sm.tenantId = :tenantId")
+    Page<StockMovementClass> findByTenantIdWithProduct(@Param("tenantId") String tenantId, Pageable pageable);
+
+    @Query(value = "SELECT sm FROM StockMovementClass sm JOIN FETCH sm.product WHERE sm.tenantId = :tenantId AND sm.productId = :productId",
+           countQuery = "SELECT COUNT(sm) FROM StockMovementClass sm WHERE sm.tenantId = :tenantId AND sm.productId = :productId")
+    Page<StockMovementClass> findByTenantIdAndProductIdWithProduct(@Param("tenantId") String tenantId, @Param("productId") String productId, Pageable pageable);
+
     List<StockMovementClass> findByTenantIdAndPurchaseOrderId(String tenantId, String purchaseOrderId);
-    
-    // Find movements by invoice
+
+    @Query(value = "SELECT sm FROM StockMovementClass sm JOIN FETCH sm.product WHERE sm.tenantId = :tenantId AND sm.purchaseOrderId = :purchaseOrderId",
+           countQuery = "SELECT COUNT(sm) FROM StockMovementClass sm WHERE sm.tenantId = :tenantId AND sm.purchaseOrderId = :purchaseOrderId")
+    Page<StockMovementClass> findByTenantIdAndPurchaseOrderIdWithProduct(@Param("tenantId") String tenantId, @Param("purchaseOrderId") String purchaseOrderId, Pageable pageable);
+
     List<StockMovementClass> findByTenantIdAndInvoiceId(String tenantId, String invoiceId);
-    
-    // Find movements by type (IN/OUT)
+
+    @Query(value = "SELECT sm FROM StockMovementClass sm JOIN FETCH sm.product WHERE sm.tenantId = :tenantId AND sm.invoiceId = :invoiceId",
+           countQuery = "SELECT COUNT(sm) FROM StockMovementClass sm WHERE sm.tenantId = :tenantId AND sm.invoiceId = :invoiceId")
+    Page<StockMovementClass> findByTenantIdAndInvoiceIdWithProduct(@Param("tenantId") String tenantId, @Param("invoiceId") String invoiceId, Pageable pageable);
+
     List<StockMovementClass> findByTenantIdAndType(String tenantId, StockMovementClass.Type type);
-    
-    // Find movements by date range
+
+    @Query(value = "SELECT sm FROM StockMovementClass sm JOIN FETCH sm.product WHERE sm.tenantId = :tenantId AND sm.type = :type",
+           countQuery = "SELECT COUNT(sm) FROM StockMovementClass sm WHERE sm.tenantId = :tenantId AND sm.type = :type")
+    Page<StockMovementClass> findByTenantIdAndTypeWithProduct(@Param("tenantId") String tenantId, @Param("type") StockMovementClass.Type type, Pageable pageable);
+
     List<StockMovementClass> findByTenantIdAndDateBetween(String tenantId, LocalDateTime startDate, LocalDateTime endDate);
-    
-    // Get total stock movements for a product (IN - OUT)
+
+    @Query(value = "SELECT sm FROM StockMovementClass sm JOIN FETCH sm.product WHERE sm.tenantId = :tenantId AND sm.date BETWEEN :startDate AND :endDate",
+           countQuery = "SELECT COUNT(sm) FROM StockMovementClass sm WHERE sm.tenantId = :tenantId AND sm.date BETWEEN :startDate AND :endDate")
+    Page<StockMovementClass> findByTenantIdAndDateBetweenWithProduct(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+
     @Query("SELECT COALESCE(SUM(CASE WHEN s.type = 'IN' THEN s.quantity ELSE -s.quantity END), 0) " +
            "FROM StockMovementClass s WHERE s.tenantId = :tenantId AND s.productId = :productId")
     Integer getNetStockMovementByTenantAndProduct(@Param("tenantId") String tenantId, @Param("productId") String productId);
-    
-    // Get total IN movements for a product
+
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM StockMovementClass s " +
            "WHERE s.tenantId = :tenantId AND s.productId = :productId AND s.type = 'IN'")
     Integer getTotalInMovementsByTenantAndProduct(@Param("tenantId") String tenantId, @Param("productId") String productId);
-    
-    // Get total OUT movements for a product
+
     @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM StockMovementClass s " +
            "WHERE s.tenantId = :tenantId AND s.productId = :productId AND s.type = 'OUT'")
     Integer getTotalOutMovementsByTenantAndProduct(@Param("tenantId") String tenantId, @Param("productId") String productId);

@@ -1,0 +1,3981 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Elevate Business Management API",
+        "description": "Comprehensive REST API for managing business operations including Finance, HR, Inventory, and CRM modules. This multi-tenant application provides complete business management capabilities.",
+        "termsOfService": "https://elevate.com/terms",
+        "contact": {
+            "name": "Elevate Support Team",
+            "email": "support@elevate.com"
+        },
+        "license": {
+            "name": "Proprietary",
+            "url": "https://elevate.com/license"
+        },
+        "version": "2.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Local Development Server"
+        },
+        {
+            "url": "https://api.elevate.com",
+            "description": "Production Server"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "User authentication and tenant management APIs"
+        },
+        {
+            "name": "Stock Management",
+            "description": "Stock levels, movements, and low stock alerts"
+        }
+    ],
+    "paths": {
+        "/stock/levels/adjust": {
+            "put": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Adjust Stock Level",
+                "description": "Manually adjust stock level for a product (for corrections, damages, etc.)",
+                "operationId": "adjustStockLevel",
+                "requestBody": {
+                    "description": "Stock adjustment details",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StockAdjustmentReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "400": {
+                        "description": "Invalid request data",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Stock level adjusted successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/updatePurchaseOrderStatus/{purchaseOrderId}/{status}": {
+            "put": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "updatePurchaseOrderStatus",
+                "parameters": [
+                    {
+                        "name": "purchaseOrderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/insc/updateProduct": {
+            "put": {
+                "tags": [
+                    "product-controller"
+                ],
+                "operationId": "updateProduct",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProductReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/performance-reviews/{reviewId}": {
+            "get": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "getPerformanceReviewById",
+                "parameters": [
+                    {
+                        "name": "reviewId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "updatePerformanceReview",
+                "parameters": [
+                    {
+                        "name": "reviewId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceReviewReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "deletePerformanceReview",
+                "parameters": [
+                    {
+                        "name": "reviewId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves/{leaveRequestId}": {
+            "get": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "getLeaveRequestById",
+                "parameters": [
+                    {
+                        "name": "leaveRequestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "updateLeaveRequest",
+                "parameters": [
+                    {
+                        "name": "leaveRequestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LeaveRequestReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "deleteLeaveRequest",
+                "parameters": [
+                    {
+                        "name": "leaveRequestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/{payrollId}": {
+            "get": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "getPayrollById",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "updatePayroll",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PayrollReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "deletePayroll",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/invoices/{id}/{status}": {
+            "put": {
+                "tags": [
+                    "invoice-controller"
+                ],
+                "operationId": "updateInvoiceStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses/{expenseId}": {
+            "get": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "getExpenseById",
+                "parameters": [
+                    {
+                        "name": "expenseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "updateExpense",
+                "parameters": [
+                    {
+                        "name": "expenseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExpenseReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "deleteExpense",
+                "parameters": [
+                    {
+                        "name": "expenseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/updateCustomer/{id}": {
+            "put": {
+                "tags": [
+                    "customer-controller"
+                ],
+                "operationId": "updateCustomerById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomerReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/category/updateCategory": {
+            "put": {
+                "tags": [
+                    "category-controller"
+                ],
+                "operationId": "updateCategory",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCategoryReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/hr/employees/{id}": {
+            "get": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "getEmployeeById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "updateEmployee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmployeeClass"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "deleteEmployee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/createNewSupplier": {
+            "post": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "createNewSupplier",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SupplierClassReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/createNewPurchaseOrder": {
+            "post": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "createPurchaseOrder",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PurchaseOrderReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/createPayment": {
+            "post": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "createPayment",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/insc/createProduct": {
+            "post": {
+                "tags": [
+                    "product-controller"
+                ],
+                "operationId": "createProduct",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/performance-reviews": {
+            "get": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "getAllPerformanceReviews",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "createPerformanceReview",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceReviewReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves": {
+            "get": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "getAllLeaveRequests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "createLeaveRequest",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LeaveRequestReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves/{leaveRequestId}/reject": {
+            "post": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "rejectLeaveRequest",
+                "parameters": [
+                    {
+                        "name": "leaveRequestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "approvedBy",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "comments",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves/{leaveRequestId}/approve": {
+            "post": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "approveLeaveRequest",
+                "parameters": [
+                    {
+                        "name": "leaveRequestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "approvedBy",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "comments",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll": {
+            "get": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "getAllPayrolls",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "createPayroll",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PayrollReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/{payrollId}/submit": {
+            "post": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "submitPayroll",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/{payrollId}/process": {
+            "post": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "processPayroll",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/{payrollId}/pay": {
+            "post": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "payPayroll",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/{payrollId}/approve": {
+            "post": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "approvePayroll",
+                "parameters": [
+                    {
+                        "name": "payrollId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses": {
+            "get": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "getAllExpenses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "createExpense",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExpenseReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses/{expenseId}/reject": {
+            "post": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "rejectExpense",
+                "parameters": [
+                    {
+                        "name": "expenseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses/{expenseId}/approve": {
+            "post": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "approveExpense",
+                "parameters": [
+                    {
+                        "name": "expenseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/createInvoice": {
+            "post": {
+                "tags": [
+                    "invoice-controller"
+                ],
+                "operationId": "createInvoice",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/createCustomer": {
+            "post": {
+                "tags": [
+                    "customer-controller"
+                ],
+                "operationId": "createNewCustomer",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomerReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/category/createCategory": {
+            "post": {
+                "tags": [
+                    "category-controller"
+                ],
+                "operationId": "createCategory",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/userLogout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Logout",
+                "description": "Invalidate the current session token and log out the user.",
+                "operationId": "logoutUser",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired session token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/userLogin": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Login",
+                "description": "Authenticate user and receive a session token. Use the session token in subsequent requests via 'Session-Key' header.",
+                "operationId": "loginUser",
+                "requestBody": {
+                    "description": "Login credentials (tenantId, username, password)",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserClassReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful - returns user details and session token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/tenantRegister": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register New Tenant",
+                "description": "Create a new tenant organization in the system. This is the first step for onboarding a new business.",
+                "operationId": "registerTenant",
+                "requestBody": {
+                    "description": "Tenant registration details",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TenantReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "409": {
+                        "description": "Tenant already exists",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "Tenant registered successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/createUser": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Create New User",
+                "description": "Create a new user within a tenant organization. Requires tenant ID and user credentials.",
+                "operationId": "createUser",
+                "requestBody": {
+                    "description": "User creation details including tenant ID, username, email, role, and password",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserClassReqDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "400": {
+                        "description": "Invalid request data",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Username already exists in tenant",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/hr/employees": {
+            "get": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "getAllEmployees",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "addEmployee",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmployeeClass"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/hr/attendance": {
+            "get": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "getAttendance",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "markAttendenceidID",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmployeeAttendanceDTO"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/movements": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get All Stock Movements",
+                "description": "Retrieve all stock movements (IN/OUT) for the tenant",
+                "operationId": "getAllStockMovements",
+                "responses": {
+                    "200": {
+                        "description": "Stock movements retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/movements/type/{type}": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Stock Movements by Type",
+                "description": "Retrieve stock movements filtered by type (IN or OUT)",
+                "operationId": "getStockMovementsByType",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "description": "Movement type (IN or OUT)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock movements retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid movement type",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/movements/purchase-order/{purchaseOrderId}": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Stock Movements by Purchase Order",
+                "description": "Retrieve all stock movements related to a specific purchase order",
+                "operationId": "getStockMovementsByPurchaseOrder",
+                "parameters": [
+                    {
+                        "name": "purchaseOrderId",
+                        "in": "path",
+                        "description": "Purchase Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock movements retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/movements/product/{productId}": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Stock Movements by Product",
+                "description": "Retrieve all stock movements for a specific product",
+                "operationId": "getStockMovementsByProduct",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "description": "Product ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock movements retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/movements/invoice/{invoiceId}": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Stock Movements by Invoice",
+                "description": "Retrieve all stock movements related to a specific invoice",
+                "operationId": "getStockMovementsByInvoice",
+                "parameters": [
+                    {
+                        "name": "invoiceId",
+                        "in": "path",
+                        "description": "Invoice ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock movements retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/movements/date-range": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Stock Movements by Date Range",
+                "description": "Retrieve stock movements within a specific date range",
+                "operationId": "getStockMovementsByDateRange",
+                "parameters": [
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "description": "Start date (ISO format)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "description": "End date (ISO format)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Invalid date range",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Stock movements retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/levels": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get All Stock Levels",
+                "description": "Retrieve current stock levels for all products in the tenant",
+                "operationId": "getAllStockLevels",
+                "responses": {
+                    "200": {
+                        "description": "Stock levels retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/levels/product/{productId}": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Stock Level by Product",
+                "description": "Retrieve current stock level for a specific product",
+                "operationId": "getStockLevelByProduct",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "description": "Product ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock level retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Stock level not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stock/alerts/low-stock": {
+            "get": {
+                "tags": [
+                    "Stock Management"
+                ],
+                "summary": "Get Low Stock Alerts",
+                "description": "Retrieve products with stock levels below the specified threshold",
+                "operationId": "getLowStockAlerts",
+                "parameters": [
+                    {
+                        "name": "threshold",
+                        "in": "query",
+                        "description": "Stock threshold (default: 10)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Low stock alerts retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/finance/year-to-date": {
+            "get": {
+                "tags": [
+                    "finance-report-controller"
+                ],
+                "operationId": "getYearToDateReport",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/finance/profit-loss/{yearMonth}": {
+            "get": {
+                "tags": [
+                    "finance-report-controller"
+                ],
+                "operationId": "getProfitLossReport",
+                "parameters": [
+                    {
+                        "name": "yearMonth",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/finance/monthly-overview/{yearMonth}": {
+            "get": {
+                "tags": [
+                    "finance-report-controller"
+                ],
+                "operationId": "getMonthlyOverview",
+                "parameters": [
+                    {
+                        "name": "yearMonth",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/finance/expense-summary/{yearMonth}": {
+            "get": {
+                "tags": [
+                    "finance-report-controller"
+                ],
+                "operationId": "getExpenseSummary",
+                "parameters": [
+                    {
+                        "name": "yearMonth",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/getPurchaseOrderBySupplier/{supplierId}": {
+            "get": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "getPurchaseOrdersBySupplier",
+                "parameters": [
+                    {
+                        "name": "supplierId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/getPurchaseOrderByStatus/{status}": {
+            "get": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "getPurchaseOrdersByStatus",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/getPurchaseOrderById/{purchaseOrderId}": {
+            "get": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "getPurchaseOrderById",
+                "parameters": [
+                    {
+                        "name": "purchaseOrderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchaseOrder/getAllPurchaseOrder": {
+            "get": {
+                "tags": [
+                    "purchase-order-controller"
+                ],
+                "operationId": "getAllPurchaseOrders",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/getPaymentByInvoice/{invoiceId}": {
+            "get": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "getPaymentsByInvoice",
+                "parameters": [
+                    {
+                        "name": "invoiceId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/getPaymentById/{paymentId}": {
+            "get": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "getPaymentById",
+                "parameters": [
+                    {
+                        "name": "paymentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/getAllPayments": {
+            "get": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "getAllPayments",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/insc/getProductById/{productId}": {
+            "get": {
+                "tags": [
+                    "product-controller"
+                ],
+                "operationId": "getProductById",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/insc/getAllProducts": {
+            "get": {
+                "tags": [
+                    "product-controller"
+                ],
+                "operationId": "getAllProductsByTenant",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/performance-reviews/employee/{employeeId}": {
+            "get": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "getPerformanceReviewsByEmployee",
+                "parameters": [
+                    {
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/performance-reviews/by-date-range": {
+            "get": {
+                "tags": [
+                    "performance-review-controller"
+                ],
+                "operationId": "getPerformanceReviewsByDateRange",
+                "parameters": [
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves/employee/{employeeId}": {
+            "get": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "getLeaveRequestsByEmployee",
+                "parameters": [
+                    {
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves/employee/{employeeId}/status/{status}": {
+            "get": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "getLeaveRequestsByEmployeeAndStatus",
+                "parameters": [
+                    {
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/hr/leaves/by-date-range": {
+            "get": {
+                "tags": [
+                    "leave-request-controller"
+                ],
+                "operationId": "getLeaveRequestsByDateRange",
+                "parameters": [
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/employee/{employeeId}": {
+            "get": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "getPayrollsByEmployee",
+                "parameters": [
+                    {
+                        "name": "employeeId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/by-status/{status}": {
+            "get": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "getPayrollsByStatus",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/payroll/by-month/{yearMonth}": {
+            "get": {
+                "tags": [
+                    "payroll-controller"
+                ],
+                "operationId": "getPayrollsByMonth",
+                "parameters": [
+                    {
+                        "name": "yearMonth",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/getInvoiceById": {
+            "get": {
+                "tags": [
+                    "invoice-controller"
+                ],
+                "operationId": "getInvoiceById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/getAllInvoices": {
+            "get": {
+                "tags": [
+                    "invoice-controller"
+                ],
+                "operationId": "getAllInvoices",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses/by-status/{status}": {
+            "get": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "getExpensesByStatus",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses/by-date-range": {
+            "get": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "getExpensesByDateRange",
+                "parameters": [
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/finance/expenses/by-category/{category}": {
+            "get": {
+                "tags": [
+                    "expense-controller"
+                ],
+                "operationId": "getExpensesByCategory",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/debug/tenants": {
+            "get": {
+                "tags": [
+                    "debug-controller"
+                ],
+                "operationId": "getAllTenants",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/debug/tenants/{tenantId}/users": {
+            "get": {
+                "tags": [
+                    "debug-controller"
+                ],
+                "operationId": "getUsersByTenant",
+                "parameters": [
+                    {
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/debug/tenants/{tenantId}/credentials": {
+            "get": {
+                "tags": [
+                    "debug-controller"
+                ],
+                "operationId": "getCredentialsByTenant",
+                "parameters": [
+                    {
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/debug/check-tenant/{tenantId}": {
+            "get": {
+                "tags": [
+                    "debug-controller"
+                ],
+                "operationId": "checkTenant",
+                "parameters": [
+                    {
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/getCustomerById/{id}": {
+            "get": {
+                "tags": [
+                    "customer-controller"
+                ],
+                "operationId": "getCustomerById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/getAllCustomers": {
+            "get": {
+                "tags": [
+                    "customer-controller"
+                ],
+                "operationId": "getAllCustomers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customerLedger/getEntriesByCustomerId/{customerId}": {
+            "get": {
+                "tags": [
+                    "customer-ledger-controller"
+                ],
+                "operationId": "getLedgerByCustomerId",
+                "parameters": [
+                    {
+                        "name": "customerId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customerLedger/getAllEntries": {
+            "get": {
+                "tags": [
+                    "customer-ledger-controller"
+                ],
+                "operationId": "getAllEntries",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customerBalance/getBalanceByCustomer/{customerId}": {
+            "get": {
+                "tags": [
+                    "customer-balance-controller"
+                ],
+                "operationId": "getBalanceByCustomer",
+                "parameters": [
+                    {
+                        "name": "customerId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customerBalance/getAllBalances": {
+            "get": {
+                "tags": [
+                    "customer-balance-controller"
+                ],
+                "operationId": "getAllBalances",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/category/getAllCategory": {
+            "get": {
+                "tags": [
+                    "category-controller"
+                ],
+                "operationId": "getCategoriesByTenant",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/allUsers": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get All Users",
+                "description": "Retrieve all users belonging to the authenticated tenant. Requires valid session.",
+                "operationId": "getUsersByTenant_1",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No users found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing session",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/hr/attendance/employee/{id}": {
+            "get": {
+                "tags": [
+                    "hrs-ap-is"
+                ],
+                "operationId": "getAttendanceOfOneEmployee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/deletePayment/{paymentId}": {
+            "delete": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "deletePayment",
+                "parameters": [
+                    {
+                        "name": "paymentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/insc/deleteProductById/{productId}": {
+            "delete": {
+                "tags": [
+                    "product-controller"
+                ],
+                "operationId": "deleteProduct",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/deleteCustomer/{id}": {
+            "delete": {
+                "tags": [
+                    "customer-controller"
+                ],
+                "operationId": "deleteCustomerById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/category/deleteCategory/{categoryId}": {
+            "delete": {
+                "tags": [
+                    "category-controller"
+                ],
+                "operationId": "deleteCategory",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "StockAdjustmentReqDTO": {
+                "required": [
+                    "productId",
+                    "quantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "productId": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "minimum": 0,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "reference": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ApiResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "data": {
+                        "type": "object"
+                    }
+                }
+            },
+            "UpdateProductReqDTO": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "categoryId": {
+                        "maxLength": 36,
+                        "minLength": 36,
+                        "type": "string"
+                    },
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 1000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "costPrice": {
+                        "minimum": 0.0,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    },
+                    "sellingPrice": {
+                        "minimum": 0.01,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    }
+                }
+            },
+            "PerformanceReviewReqDTO": {
+                "required": [
+                    "employeeId"
+                ],
+                "type": "object",
+                "properties": {
+                    "employeeId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "reviewerName": {
+                        "type": "string"
+                    },
+                    "reviewDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "rating": {
+                        "type": "string"
+                    },
+                    "workQuality": {
+                        "type": "string"
+                    },
+                    "communication": {
+                        "type": "string"
+                    },
+                    "teamwork": {
+                        "type": "string"
+                    },
+                    "punctuality": {
+                        "type": "string"
+                    },
+                    "overallComments": {
+                        "type": "string"
+                    },
+                    "improvementAreas": {
+                        "type": "string"
+                    },
+                    "strengths": {
+                        "type": "string"
+                    }
+                }
+            },
+            "LeaveRequestReqDTO": {
+                "required": [
+                    "employeeId",
+                    "endDate",
+                    "leaveType",
+                    "startDate"
+                ],
+                "type": "object",
+                "properties": {
+                    "employeeId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "leaveType": {
+                        "type": "string"
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PayrollReqDTO": {
+                "required": [
+                    "employeeId",
+                    "salary",
+                    "yearMonth"
+                ],
+                "type": "object",
+                "properties": {
+                    "employeeId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "yearMonth": {
+                        "type": "string"
+                    },
+                    "salary": {
+                        "type": "number"
+                    },
+                    "dearnessAllowance": {
+                        "type": "number"
+                    },
+                    "houseRentAllowance": {
+                        "type": "number"
+                    },
+                    "otherAllowances": {
+                        "type": "number"
+                    },
+                    "incomeTax": {
+                        "type": "number"
+                    },
+                    "providentFund": {
+                        "type": "number"
+                    },
+                    "professionalTax": {
+                        "type": "number"
+                    },
+                    "otherDeductions": {
+                        "type": "number"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ExpenseReqDTO": {
+                "required": [
+                    "amount",
+                    "category",
+                    "expenseDate"
+                ],
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "expenseDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "referenceNumber": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CustomerReqDTO": {
+                "required": [
+                    "name"
+                ],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "email": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "phone": {
+                        "maxLength": 20,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "maxLength": 100,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UpdateCategoryReqDTO": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
+            "EmployeeClass": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "designation": {
+                        "type": "string",
+                        "enum": [
+                            "CASHIER",
+                            "ACCOUNTANT",
+                            "SALES_EXECUTIVE",
+                            "DELIVERY",
+                            "HELPER"
+                        ]
+                    },
+                    "department": {
+                        "type": "string"
+                    },
+                    "dateOfJoining": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "salary": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "SupplierClassReqDTO": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PurchaseOrderItemReqDTO": {
+                "required": [
+                    "productId",
+                    "quantity",
+                    "unitPrice"
+                ],
+                "type": "object",
+                "properties": {
+                    "productId": {
+                        "maxLength": 36,
+                        "minLength": 36,
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "unitPrice": {
+                        "minimum": 0.01,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    }
+                }
+            },
+            "PurchaseOrderReqDTO": {
+                "required": [
+                    "items",
+                    "supplierId"
+                ],
+                "type": "object",
+                "properties": {
+                    "supplierId": {
+                        "maxLength": 36,
+                        "minLength": 36,
+                        "type": "string"
+                    },
+                    "orderDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PurchaseOrderItemReqDTO"
+                        }
+                    }
+                }
+            },
+            "PaymentReqDTO": {
+                "required": [
+                    "amount",
+                    "customerId",
+                    "invoiceId",
+                    "method"
+                ],
+                "type": "object",
+                "properties": {
+                    "invoiceId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "customerId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "amount": {
+                        "minimum": 0.01,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "transactionRef": {
+                        "maxLength": 100,
+                        "minLength": 0,
+                        "type": "string"
+                    }
+                }
+            },
+            "ProductReqDTO": {
+                "required": [
+                    "categoryId",
+                    "costPrice",
+                    "name",
+                    "sellingPrice"
+                ],
+                "type": "object",
+                "properties": {
+                    "categoryId": {
+                        "maxLength": 36,
+                        "minLength": 36,
+                        "type": "string"
+                    },
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 1000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "costPrice": {
+                        "minimum": 0.0,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    },
+                    "sellingPrice": {
+                        "minimum": 0.01,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    }
+                }
+            },
+            "InvoiceItemReqDTO": {
+                "required": [
+                    "productId",
+                    "quantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "invoiceId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "productId": {
+                        "maxLength": 36,
+                        "minLength": 36,
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "unitPrice": {
+                        "minimum": 0.01,
+                        "exclusiveMinimum": false,
+                        "type": "number"
+                    }
+                }
+            },
+            "InvoiceReqDTO": {
+                "required": [
+                    "customerId",
+                    "date",
+                    "items",
+                    "name",
+                    "phone",
+                    "status"
+                ],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "email": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "phone": {
+                        "maxLength": 20,
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "PAID",
+                            "CANCELLED"
+                        ]
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/InvoiceItemReqDTO"
+                        }
+                    }
+                }
+            },
+            "CategoryReqDTO": {
+                "required": [
+                    "name"
+                ],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "type": "string"
+                    }
+                }
+            },
+            "UserClassReqDTO": {
+                "required": [
+                    "password",
+                    "tenantId",
+                    "username"
+                ],
+                "type": "object",
+                "properties": {
+                    "tenantId": {
+                        "maxLength": 100,
+                        "minLength": 3,
+                        "type": "string"
+                    },
+                    "username": {
+                        "maxLength": 100,
+                        "minLength": 3,
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "maxLength": 2147483647,
+                        "minLength": 6,
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TenantReqDTO": {
+                "required": [
+                    "name"
+                ],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 2,
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "planType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "EmployeeAttendanceDTO": {
+                "type": "object",
+                "properties": {
+                    "employeeId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "PRESENT",
+                            "HALF_DAY",
+                            "ABSENT"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
--- V16__create_payroll.sql
+-- V17__create_payroll.sql
 -- Create Payroll table for Finance module
 
 CREATE TABLE IF NOT EXISTS payroll (

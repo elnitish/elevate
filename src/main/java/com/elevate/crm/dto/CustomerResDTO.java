@@ -17,6 +17,10 @@ public class CustomerResDTO {
     private String address;
     private String source;
     private String notes;
+    private String customerType;
+    private java.math.BigDecimal creditLimit;
+    private Integer paymentTermsDays;
+    private String taxId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -31,6 +35,10 @@ public class CustomerResDTO {
         this.address = c.getAddress();
         this.source = c.getSource();
         this.notes = c.getNotes();
+        this.customerType = c.getCustomerType() != null ? c.getCustomerType().name() : "B2C";
+        this.creditLimit = c.getCreditLimit();
+        this.paymentTermsDays = c.getPaymentTermsDays();
+        this.taxId = c.getTaxId();
         this.createdAt = c.getCreatedAt();
         this.updatedAt = c.getUpdatedAt();
     }

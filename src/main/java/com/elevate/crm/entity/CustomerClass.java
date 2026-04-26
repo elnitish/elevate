@@ -52,6 +52,19 @@ public class CustomerClass {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name = "customer_type", nullable = false)
+    private CustomerType customerType = CustomerType.B2C;
+
+    @Column(name = "credit_limit", nullable = false, precision = 12, scale = 2)
+    private java.math.BigDecimal creditLimit = java.math.BigDecimal.ZERO;
+
+    @Column(name = "payment_terms_days", nullable = false)
+    private Integer paymentTermsDays = 0;
+
+    @Column(name = "tax_id", length = 50)
+    private String taxId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -59,6 +72,10 @@ public class CustomerClass {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public enum CustomerType {
+        B2C, B2B, WHOLESALE, RETAIL
+    }
 }
 
 

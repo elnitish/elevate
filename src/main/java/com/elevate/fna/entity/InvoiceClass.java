@@ -36,6 +36,9 @@ public class InvoiceClass {
     @Column(name = "invoice_id")
     private Long invoiceId;
 
+    @Column(name = "invoice_number", length = 50)
+    private String invoiceNumber;
+
     @Column(name = "tenant_id", nullable = false, length = 36)
     private String tenantId;
 
@@ -52,18 +55,39 @@ public class InvoiceClass {
     @Column(name = "phone", nullable = false, length = 20)
     private String phone;
 
-    @Column(name = "total_amount", precision = 10, scale = 2)
+    @Column(name = "subtotal", precision = 12, scale = 2)
+    private BigDecimal subtotal;
+
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "tax_rate", precision = 5, scale = 2)
+    private BigDecimal taxRate = BigDecimal.ZERO;
+
+    @Column(name = "tax_amount", precision = 12, scale = 2)
+    private BigDecimal taxAmount = BigDecimal.ZERO;
+
+    @Column(name = "total_amount", precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "remaining_amount", precision = 10, scale = 2)
+    @Column(name = "remaining_amount", precision = 12, scale = 2)
     private BigDecimal remainingAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status ;
+    private Status status;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
     @Column(name = "date")
     private LocalDate date;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    @Column(name = "payment_terms_days", nullable = false)
+    private Integer paymentTermsDays = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -73,72 +97,14 @@ public class InvoiceClass {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // One Invoice → Many InvoiceItems
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<InvoiceItemsClass> items = new ArrayList<>();
 
-    public InvoiceClass(){}
-
-    public InvoiceClass(String tenantId, String name, String email, String phone, BigDecimal totalAmount, LocalDate date) {
-        this.tenantId = tenantId;
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.totalAmount = totalAmount;
-        this.remainingAmount = totalAmount;
-        this.date = date;
-    }
+    public InvoiceClass() {}
 
     public enum Status {
-        PENDING, PAID, CANCELLED
-    }
-
-    public Long getInvoiceId() {
-        return invoiceId;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public CustomerClass getCustomer() {
-        return customer;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public BigDecimal getRemainingAmount() {
-        return remainingAmount;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+        DRAFT, PENDING, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED
     }
 }

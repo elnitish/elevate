@@ -8,11 +8,11 @@
 
 ## Quick Start for Frontend Developers
 
-### 1. Authentication Flow
+### 1. Authentication Flow (dev)
 ```
-1. Register Tenant → Get tenantId
-2. Login User → Get sessionToken
-3. Use sessionToken in X-Session-Token header for all requests
+1. Register tenant via `/auth/tenantRegister` → get `tenantId`
+2. Login via `/auth/userLogin` → receives `sessionToken` in response
+3. For testing you may include the session token in requests using header `Session-Key` (or `X-Session-Token`) — note: session enforcement is currently disabled in this dev build
 ```
 
 ### 2. Base Configuration
@@ -21,9 +21,9 @@
 const API_BASE = 'http://localhost:8080';
 const SESSION_TOKEN = localStorage.getItem('sessionToken');
 
-// All requests need this header:
+// Optional header (session enforcement disabled for dev):
 headers: {
-  'X-Session-Token': SESSION_TOKEN,
+  'Session-Key': SESSION_TOKEN, // or 'X-Session-Token'
   'Content-Type': 'application/json'
 }
 ```
@@ -61,18 +61,16 @@ headers: {
 
 #### Register New Tenant
 ```
-POST /auth/register
+POST /auth/tenantRegister
 Status: 201 Created
 
-Request:
+Request (TenantReqDTO):
 {
   "name": "Company Name",
-  "email": "admin@company.com",
-  "username": "admin",
-  "password": "SecurePass123"
+  "email": "admin@company.com"
 }
 
-Response:
+Response (sample):
 {
   "message": "Tenant registered successfully",
   "code": 201,
@@ -80,89 +78,107 @@ Response:
     "tenantId": "uuid-string",
     "name": "Company Name",
     "email": "admin@company.com",
-    "createdAt": "2024-02-04T12:00:00"
+    "createdAt": "2026-02-05T12:00:00"
   }
 }
 ```
 
 #### Login
 ```
-POST /auth/login
+POST /auth/userLogin
 Status: 200 OK
 
-Request:
+Request (UserClassReqDTO):
 {
+  "tenantId": "tenant-id",
   "username": "admin",
   "password": "SecurePass123"
 }
 
-Response:
+Response (sample):
 {
-  "message": "Login successful",
+  "message": "User found successfully",
   "code": 200,
   "data": {
-    "sessionToken": "uuid-token",
-    "username": "admin",
-    "role": "ADMIN",
-    "tenantId": "uuid-string"
+    "user": {
+      "id": "test-admin-user",
+      "tenantId": "tenant-id",
+      "username": "admin",
+      "email": "admin@test.com",
+      "role": "ADMIN"
+    },
+    "sessionToken": "uuid-token"
   }
 }
 
-⚠️ IMPORTANT: Save sessionToken in localStorage
-localStorage.setItem('sessionToken', response.data.data.sessionToken);
+Note: the login returns a `sessionToken`. In this dev build session enforcement is disabled (requests do not require the token), but the token is provided for future/optional use. Save it to localStorage if you plan to test guarded endpoints later.
 ```
+
+### Developer Testing — Default Data
+
+- **Tenant ID:** `test-tenant-001` (Test Organization)
+- **Admin user:** username `admin`  — password `admin@123`
+- **Test user:** username `testuser` — password `test@123`
+
+These records are created automatically on application startup by the `DataInitializer` component. Use these credentials to quickly exercise login and API flows while developing.
 
 #### Create User
 ```
-POST /auth/users
+POST /auth/createUser
 Status: 201 Created
-Header: X-Session-Token required
+Header: (optional in dev) `Session-Key` / `X-Session-Token`
 
-Request:
+Request (UserClassReqDTO):
 {
+  "tenantId": "tenant-id",
   "username": "john_doe",
   "email": "john@company.com",
-  "role": "ADMIN|USER|EMPLOYEE",
+  "role": "ADMIN|USER",
   "password": "SecurePass123"
 }
 
 Response: { user object with userId }
 ```
 
-#### Validate Token
+#### Create Expense
 ```
-GET /auth/validate-token
-Status: 200 OK
-Header: X-Session-Token required
+POST /finance/expenses
+Status: 201 Created
+
+Request:
+{
+  "amount": 5000.00,
+  "category": "RENT|SALARY|UTILITIES|OFFICE_SUPPLIES|TRAVEL|FOOD_BEVERAGES|MAINTENANCE|INSURANCE|MARKETING|EQUIPMENT|OTHER",
+  "description": "Monthly office rent payment",
+  "expenseDate": "2024-02-01",
+  "referenceNumber": "EXP-001",
+  "status": "PENDING"
+}
 
 Response:
 {
-  "message": "Token is valid",
-  "code": 200,
+  "message": "Expense created successfully",
+  "code": 201,
   "data": {
-    "valid": true,
-    "username": "admin",
-    "role": "ADMIN"
+    "expenseId": 1,
+    "tenantId": "uuid",
+    "amount": 5000.00,
+    "category": "RENT",
+    "status": "PENDING",
+    "createdBy": "admin",
+    "createdAt": "2024-02-04T12:00:00"
   }
 }
+
+Note: For development this endpoint does not require a session header; to exercise authenticated flows include `Session-Key` or `X-Session-Token` in the request headers.
 ```
-
-#### Logout
-```
-POST /auth/logout
-Status: 200 OK
-Header: X-Session-Token required
-
-Response: { "message": "Logout successful", "code": 200 }
-```
-
----
-
 ## Finance Module APIs
 
 ### Base URL: `/finance`
 
-### ⚠️ ALL Finance endpoints require: `X-Session-Token` header
+### ⚠️ Session enforcement (dev)
+
+Session-based authentication is currently disabled in this development build to simplify testing. Endpoints will accept requests without a session token. The login still returns a `sessionToken` which can be sent in the `Session-Key` or `X-Session-Token` header when you want to exercise guarded flows.
 
 ---
 
@@ -486,7 +502,9 @@ Response:
 
 ### Base URL: `/hr`
 
-### ⚠️ ALL HR endpoints require: `X-Session-Token` header
+### ⚠️ Session enforcement (dev)
+
+Session-based authentication is currently disabled in this development build for convenience. If session validation is enabled in a different environment, include `Session-Key` (or `X-Session-Token`) in request headers.
 
 ---
 
@@ -800,7 +818,10 @@ const useAuth = () => {
     try {
       const response = await axios.post('/auth/login', { username, password });
       if (response.data.code === 200) {
-        localStorage.setItem('sessionToken', response.data.data.sessionToken);
+        // save token if you plan to use it; session enforcement is disabled in local dev
+        if(response.data.data && response.data.data.sessionToken){
+          localStorage.setItem('sessionToken', response.data.data.sessionToken);
+        }
         setUser(response.data.data);
         return response.data;
       }
@@ -833,7 +854,7 @@ const useExpenses = () => {
     const token = localStorage.getItem('sessionToken');
     try {
       const response = await axios.get('/finance/expenses', {
-        headers: { 'X-Session-Token': token }
+        headers: token ? { 'Session-Key': token } : {}
       });
       if (response.data.code === 200) {
         setExpenses(response.data.data);
@@ -846,7 +867,7 @@ const useExpenses = () => {
   const createExpense = async (data) => {
     const token = localStorage.getItem('sessionToken');
     const response = await axios.post('/finance/expenses', data, {
-      headers: { 'X-Session-Token': token }
+      headers: token ? { 'Session-Key': token } : {}
     });
     if (response.data.code === 201) {
       await fetchExpenses();
@@ -869,7 +890,7 @@ const usePayroll = () => {
     const token = localStorage.getItem('sessionToken');
     try {
       const response = await axios.get('/finance/payroll', {
-        headers: { 'X-Session-Token': token }
+        headers: token ? { 'Session-Key': token } : {}
       });
       if (response.data.code === 200) {
         setPayrolls(response.data.data);
@@ -882,7 +903,7 @@ const usePayroll = () => {
   const submitPayroll = async (payrollId) => {
     const token = localStorage.getItem('sessionToken');
     const response = await axios.post(`/finance/payroll/${payrollId}/submit`, {}, {
-      headers: { 'X-Session-Token': token }
+      headers: token ? { 'Session-Key': token } : {}
     });
     await fetchPayrolls();
     return response.data;
@@ -891,7 +912,7 @@ const usePayroll = () => {
   const approvePayroll = async (payrollId) => {
     const token = localStorage.getItem('sessionToken');
     const response = await axios.post(`/finance/payroll/${payrollId}/approve`, {}, {
-      headers: { 'X-Session-Token': token }
+      headers: token ? { 'Session-Key': token } : {}
     });
     await fetchPayrolls();
     return response.data;
@@ -942,7 +963,7 @@ curl -X GET "http://localhost:8080/finance/expenses" \
 - ✅ All 42+ endpoints tested
 - ✅ Multi-tenant isolation verified
 - ✅ Error handling implemented
-- ✅ CORS headers configured (if needed)
+- ✅ CORS configured to allow all origins for development (`allowedOrigins="*"`) — `allowCredentials` is set to `false` in dev. Remove or tighten this policy for production.
 - ✅ Rate limiting recommended (future enhancement)
 - ✅ API versioning ready (v1.0.0)
 
